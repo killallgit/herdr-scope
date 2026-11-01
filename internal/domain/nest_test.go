@@ -86,7 +86,21 @@ func TestResolveTreeKeepsWorktreesWithTheirFamily(t *testing.T) {
 		"a linked worktree is its repository's, wherever it lives")
 	assert.Equal(t, map[WorkspaceID]WorkspaceID{"billing": "acme", "billing-fix": "acme", "inside": "acme"}, tree.Parents,
 		"a worktree of a nested checkout rides with the outermost family")
-	assert.Equal(t, "billing", tree.ParentLabels["billing-fix"])
+	assert.Equal(t, "acme", tree.ParentLabels["billing-fix"], "the family moved into the folder and is named after it")
+}
+
+func TestResolveTreeHangsALoneWorktreeUnderItsRepositorysFolder(t *testing.T) {
+	workspaces := []Workspace{
+		folder("acme", "/home/user/acme"),
+		checkout("billing-fix", "/home/user/wt/billing-fix", true, "billing"),
+		checkout("notes-fix", "/home/user/wt/notes-fix", true, "notes"),
+	}
+	workspaces[1].Repository.Root = "/home/user/acme/services/billing"
+	tree := ResolveTree(workspaces, true, "/home/user")
+	assert.Equal(t, map[WorkspaceID]WorkspaceID{"billing-fix": "acme"}, tree.Parents,
+		"the checkout is closed, but its repository lives in the folder")
+	assert.Empty(t, tree.Folders, "a worktree is no folder")
+	assert.Equal(t, map[WorkspaceID]string{"billing-fix": "acme", "notes-fix": "notes"}, tree.ParentLabels)
 }
 
 func TestResolveTreeReadsWindowsPaths(t *testing.T) {
@@ -177,6 +191,24 @@ func TestNestedFolderHangsUnderItsParentInAgents(t *testing.T) {
 	s.agent("billing", "t1", "p1", 1, DisplayWorking)
 	assert.Equal(t, []string{"# @acme └ billing", "1 billing:p1", ""}, outline(nestedInput(s)),
 		"a parent with no agent is synthesised, as for a worktree")
+}
+
+func TestFamilyWithoutAParentStaysOneBlock(t *testing.T) {
+	workspaces := append(projectSession(),
+		checkout("billing-fix", "/home/user/wt/billing-fix", true, "billing"),
+		checkout("jobs-fix", "/home/user/wt/jobs-fix", true, "jobs"))
+	workspaces[len(workspaces)-1].Repository.Root = "/home/user/acme/services/jobs"
+	s := &scenario{workspaces: workspaces}
+	s.agent("notes", "t1", "p1", 2, DisplayIdle).
+		agent("billing-fix", "t1", "p1", 3, DisplayWorking).
+		agent("search", "t1", "p1", 5, DisplayIdle).
+		agent("jobs-fix", "t1", "p1", 1, DisplayWorking)
+	assert.Equal(t, []string{
+		"# @acme ├ jobs-fix", "1 jobs-fix:p1",
+		"# ├ billing-fix", "1 billing-fix:p1",
+		"# └ search", "1 search:p1", "",
+		"# notes", "0 notes:p1", "",
+	}, outline(nestedInput(s)), "one synthesised row for the folder; a worktree of a closed checkout belongs too")
 }
 
 func nestedInput(s *scenario) SidebarView {

@@ -9,13 +9,10 @@ type TreePosition int
 const (
 	// TreeRoot is a top-level group: a plain workspace or a main checkout.
 	TreeRoot TreePosition = iota
-	// TreeChild is a worktree under its checkout, with siblings below it.
+	// TreeChild is a member under its parent, with siblings below it.
 	TreeChild
-	// TreeLastChild is the worktree that closes its family.
+	// TreeLastChild is the member that closes its family.
 	TreeLastChild
-	// TreeOrphan is a worktree whose checkout runs no agent: it hangs off a
-	// synthesised repository row.
-	TreeOrphan
 	// TreeDetached is a worktree the panel order put away from its family:
 	// top level, marked as a worktree, no corner.
 	TreeDetached
@@ -57,7 +54,10 @@ type SidebarGroup struct {
 	Workspace WorkspaceID
 	Label     string
 	Tree      TreePosition
-	// OrphanRepo is the repository name shown above a TreeOrphan group.
+	// OrphanRepo is the parent row synthesised above the group when the
+	// family's parent runs no agent: the folder's name, or the repository's.
+	// It is set on the first group of the family's run; the siblings that
+	// follow hang under the same row.
 	OrphanRepo string
 	// Folder is true for a nested folder rather than a worktree: its header
 	// wears no worktree mark.
@@ -363,7 +363,6 @@ func (b *rowBuilder) corner(a Agent) Corner {
 func (b *rowBuilder) groups(ordered []orderEntry, stale map[WorkspaceID]bool) []SidebarGroup {
 	var order []WorkspaceID
 	seen := map[WorkspaceID]bool{}
-	lastChild := map[WorkspaceID]WorkspaceID{}
 	folded := map[WorkspaceID]bool{}
 	for _, f := range b.carriers {
 		folded[f.Root] = true
@@ -375,22 +374,14 @@ func (b *rowBuilder) groups(ordered []orderEntry, stale map[WorkspaceID]bool) []
 		}
 		seen[ws] = true
 		order = append(order, ws)
-		if parent, ok := b.ranks.parentOf[ws]; ok {
-			lastChild[parent] = ws
-		}
 	}
+	places := b.places(order, folded)
 	// A family reads as one block: no gap above any member, after the parent
 	// or after a sibling: a gap between siblings would leave a corner
 	// pointing at a blank line.
-	family := func(ws WorkspaceID) WorkspaceID {
-		if parent, ok := b.ranks.parentOf[ws]; ok {
-			return parent
-		}
-		return ws
-	}
 	noGap := map[WorkspaceID]bool{}
 	for i := 0; i+1 < len(order); i++ {
-		if _, child := b.ranks.parentOf[order[i+1]]; child && family(order[i+1]) == family(order[i]) {
+		if b.ranks.nested(order[i+1]) && b.ranks.family(order[i+1]) == b.ranks.family(order[i]) {
 			noGap[order[i]] = true
 		}
 	}
@@ -402,7 +393,7 @@ func (b *rowBuilder) groups(ordered []orderEntry, stale map[WorkspaceID]bool) []
 		if lone := b.carriers[e.agent.Pane]; lone != nil && lone.Alone {
 			// A fold line is a group of its own: no header, and a gap only
 			// when nothing of its family stays under it.
-			g := b.newGroup(ws, false, lastChild, stale)
+			g := b.newGroup(ws, false, places[ws], stale)
 			g.Rows = []SidebarRow{b.row(e)}
 			g.Gap = b.in.Policy.GroupGap && !lone.Kept
 			groups = append(groups, g)
@@ -410,7 +401,7 @@ func (b *rowBuilder) groups(ordered []orderEntry, stale map[WorkspaceID]bool) []
 		}
 		if n := len(groups); n == 0 || groups[n-1].Workspace != ws || b.lone(groups[n-1].Rows[0].Pane) {
 			// A fold line names its root in place of the root's header.
-			groups = append(groups, b.newGroup(ws, !headerShown[ws] && ws != "" && !folded[ws], lastChild, stale))
+			groups = append(groups, b.newGroup(ws, !headerShown[ws] && ws != "" && !folded[ws], places[ws], stale))
 			headerShown[ws] = true
 		}
 		g := &groups[len(groups)-1]
@@ -420,21 +411,58 @@ func (b *rowBuilder) groups(ordered []orderEntry, stale map[WorkspaceID]bool) []
 	return groups
 }
 
-func (b *rowBuilder) newGroup(ws WorkspaceID, header bool, lastChild map[WorkspaceID]WorkspaceID, stale map[WorkspaceID]bool) SidebarGroup {
-	g := SidebarGroup{Workspace: ws, Label: labelOf(b.labels, ws), Header: header, Stale: stale[ws], Folder: b.ranks.folder[ws]}
-	switch parent, child := b.ranks.parentOf[ws]; {
-	case b.ranks.detached[ws]:
-		g.Tree = TreeDetached
-	case child && lastChild[parent] == ws:
-		g.Tree = TreeLastChild
-	case child:
-		g.Tree = TreeChild
-	default:
-		if repo, orphan := b.ranks.orphanRepo[ws]; orphan {
-			g.Tree, g.OrphanRepo = TreeOrphan, repo
+// place is where a workspace's header sits in its family's block.
+type place struct {
+	tree TreePosition
+	// parent is the synthesised parent row above the header: set on the
+	// first of a run of members whose parent runs no agent.
+	parent string
+}
+
+// places lays the families out over the workspace order. A listed parent
+// closes its family on the last member anywhere below it; a synthesised one
+// stands above each run of adjacent members, since the order may scatter
+// them, and closes on the run's last. A fold line names the family already:
+// no row is synthesised under one.
+func (b *rowBuilder) places(order []WorkspaceID, folded map[WorkspaceID]bool) map[WorkspaceID]place {
+	lastChild := map[WorkspaceID]WorkspaceID{}
+	for _, ws := range order {
+		if parent, ok := b.ranks.parentOf[ws]; ok {
+			lastChild[parent] = ws
 		}
 	}
-	return g
+	out := make(map[WorkspaceID]place, len(order))
+	for i, ws := range order {
+		var p place
+		parent, child := b.ranks.parentOf[ws]
+		repo, orphan := b.ranks.orphanRepo[ws]
+		switch {
+		case b.ranks.detached[ws]:
+			p.tree = TreeDetached
+		case child && lastChild[parent] == ws:
+			p.tree = TreeLastChild
+		case child:
+			p.tree = TreeChild
+		case orphan:
+			family := b.ranks.family(ws)
+			if !folded[family] && (i == 0 || b.ranks.family(order[i-1]) != family || !b.ranks.nested(order[i-1])) {
+				p.parent = repo
+			}
+			p.tree = TreeLastChild
+			if i+1 < len(order) && b.ranks.family(order[i+1]) == family && b.ranks.nested(order[i+1]) {
+				p.tree = TreeChild
+			}
+		}
+		out[ws] = p
+	}
+	return out
+}
+
+func (b *rowBuilder) newGroup(ws WorkspaceID, header bool, p place, stale map[WorkspaceID]bool) SidebarGroup {
+	return SidebarGroup{
+		Workspace: ws, Label: labelOf(b.labels, ws), Tree: p.tree, OrphanRepo: p.parent,
+		Header: header, Stale: stale[ws], Folder: b.ranks.folder[ws],
+	}
 }
 
 // spaces aggregates each workspace's agents into one mark, in Herdr's

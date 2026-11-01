@@ -369,7 +369,8 @@ func TestRepositoryFallbackForWorkspacesWithoutHerdrInfo(t *testing.T) {
 	frame(t, f)
 	frame(t, f)
 	require.Len(t, f.sidebar.last().Groups, 1)
-	assert.Equal(t, domain.TreeOrphan, f.sidebar.last().Groups[0].Tree, "the resolver's answer shaped the tree")
+	assert.Equal(t, domain.TreeLastChild, f.sidebar.last().Groups[0].Tree, "the resolver's answer shaped the tree")
+	assert.Equal(t, "app", f.sidebar.last().Groups[0].OrphanRepo)
 	assert.Equal(t, 1, resolver.calls, "lookups are cached")
 }
 

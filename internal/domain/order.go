@@ -54,10 +54,14 @@ type orderEntry struct {
 
 // ranking is everything ordering knows about one snapshot.
 type ranking struct {
-	pane       map[PaneID]string
-	workspace  map[WorkspaceID]string
-	tab        map[PaneID]string
+	pane      map[PaneID]string
+	workspace map[WorkspaceID]string
+	tab       map[PaneID]string
+	// parentOf hangs a member under a parent the panel lists; orphanOf names
+	// the family of a member whose parent it does not, so that the family
+	// still ranks and sits as one block, under a synthesised parent row.
 	parentOf   map[WorkspaceID]WorkspaceID
+	orphanOf   map[WorkspaceID]WorkspaceID
 	orphanRepo map[WorkspaceID]string
 	detached   map[WorkspaceID]bool
 	splitChild map[PaneID]bool
@@ -69,24 +73,37 @@ func (r ranking) keys(agent Agent) SortKeys {
 }
 
 // nested reports whether a workspace sits one level in: a worktree under a
-// real parent group or under a synthesised repository row.
+// real parent group or under a synthesised parent row.
 func (r ranking) nested(ws WorkspaceID) bool {
 	_, child := r.parentOf[ws]
 	_, orphan := r.orphanRepo[ws]
 	return child || orphan
 }
 
+// family is the block a workspace ranks with: its parent, listed or
+// synthesised, or itself.
+func (r ranking) family(ws WorkspaceID) WorkspaceID {
+	if parent, ok := r.parentOf[ws]; ok {
+		return parent
+	}
+	if parent, ok := r.orphanOf[ws]; ok {
+		return parent
+	}
+	return ws
+}
+
 // rank computes the ordering keys of a snapshot.
 //
-// Git worktrees ride with the checkout they were cut from: a family ranks by
-// its most recent member and stays contiguous, parent first — but only when
-// the parent is listed too. A worktree whose checkout runs no agent stays
-// top-level and gets a synthesised repository row instead (orphanRepo).
+// Git worktrees ride with the checkout they were cut from, and nested folders
+// with the folder: a family ranks by its most recent member and stays
+// contiguous, parent first. When the parent runs no agent the members still
+// stay together, under a synthesised parent row (orphanRepo: the folder's
+// name, or the repository's).
 func rank(entries []orderEntry, tree WorktreeTree) ranking {
 	r := ranking{
 		pane: make(map[PaneID]string, len(entries)), workspace: map[WorkspaceID]string{},
 		tab: make(map[PaneID]string, len(entries)), parentOf: map[WorkspaceID]WorkspaceID{},
-		orphanRepo: map[WorkspaceID]string{}, detached: map[WorkspaceID]bool{},
+		orphanOf: map[WorkspaceID]WorkspaceID{}, orphanRepo: map[WorkspaceID]string{}, detached: map[WorkspaceID]bool{},
 		splitChild: make(map[PaneID]bool, len(entries)), folder: make(map[WorkspaceID]bool, len(tree.Folders)),
 	}
 	for child := range tree.Folders {
@@ -112,8 +129,12 @@ func rank(entries []orderEntry, tree WorktreeTree) ranking {
 		}
 	}
 	for child, parent := range tree.Parents {
-		if present[child] && present[parent] {
+		switch {
+		case !present[child]:
+		case present[parent]:
 			r.parentOf[child] = parent
+		default:
+			r.orphanOf[child] = parent
 		}
 	}
 	for _, ws := range wsOrder {
@@ -123,20 +144,14 @@ func rank(entries []orderEntry, tree WorktreeTree) ranking {
 			}
 		}
 	}
-	family := func(ws WorkspaceID) WorkspaceID {
-		if parent, ok := r.parentOf[ws]; ok {
-			return parent
-		}
-		return ws
-	}
 	familyKey := map[WorkspaceID]string{}
 	for _, ws := range wsOrder {
-		if key := own[ws]; key > familyKey[family(ws)] {
-			familyKey[family(ws)] = key
+		if key := own[ws]; key > familyKey[r.family(ws)] {
+			familyKey[r.family(ws)] = key
 		}
 	}
 	for _, ws := range wsOrder {
-		f := family(ws)
+		f := r.family(ws)
 		depth := "0"
 		if f == ws {
 			depth = "1"

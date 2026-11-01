@@ -106,9 +106,11 @@ func ResolveWorktrees(workspaces []Workspace) WorktreeTree {
 // and, when nestFolders is set, folder nesting. A workspace whose folder lies
 // inside another open workspace's folder hangs under the nearest such
 // workspace — or that one's own parent: the tree stays one level deep, and a
-// worktree of a nested checkout rides with the family too. Linked worktrees
-// never adopt, and neither do home or a filesystem root, which would swallow
-// every other workspace.
+// worktree of a nested checkout rides with the family too, its checkout open
+// or not: a worktree stands where its repository does. A family that moved
+// into a folder is named after the folder. Linked worktrees never adopt, and
+// neither do home or a filesystem root, which would swallow every other
+// workspace.
 func ResolveTree(workspaces []Workspace, nestFolders bool, home string) WorktreeTree {
 	tree := ResolveWorktrees(workspaces)
 	if !nestFolders {
@@ -116,7 +118,7 @@ func ResolveTree(workspaces []Workspace, nestFolders bool, home string) Worktree
 	}
 	nearest := map[WorkspaceID]WorkspaceID{}
 	for _, ws := range workspaces {
-		if _, child := tree.Parents[ws.ID]; child || linked(ws) {
+		if _, child := tree.Parents[ws.ID]; child {
 			continue
 		}
 		if parent, ok := enclosing(ws, workspaces, home); ok {
@@ -138,12 +140,22 @@ func ResolveTree(workspaces []Workspace, nestFolders bool, home string) Worktree
 		}
 	}
 	labels := workspaceLabels(workspaces)
-	for child := range nearest {
-		root := top(child)
-		tree.Parents[child], tree.Folders[child], tree.ParentLabels[child] = root, root, labels[root]
+	for _, ws := range workspaces {
+		if _, ok := nearest[ws.ID]; !ok {
+			continue
+		}
+		root := top(ws.ID)
+		tree.Parents[ws.ID], tree.ParentLabels[ws.ID] = root, labels[root]
+		if !linked(ws) {
+			tree.Folders[ws.ID] = root
+		}
 	}
-	for child := range tree.Parents {
-		tree.Parents[child] = top(child)
+	for child, parent := range tree.Parents {
+		root := top(child)
+		if root != parent {
+			tree.ParentLabels[child] = labels[root]
+		}
+		tree.Parents[child] = root
 	}
 	return tree
 }
@@ -152,9 +164,14 @@ func linked(ws Workspace) bool {
 	return ws.Repository != nil && ws.Repository.Linked
 }
 
-// enclosing is the open workspace whose folder most closely contains ws's.
+// enclosing is the open workspace whose folder most closely contains ws's. A
+// linked worktree lives wherever git put it; the folder that holds it is its
+// repository's.
 func enclosing(ws Workspace, workspaces []Workspace, home string) (WorkspaceID, bool) {
 	dir := folderOf(ws)
+	if linked(ws) {
+		dir = cleanDir(ws.Repository.Root)
+	}
 	var parent WorkspaceID
 	best := -1
 	for _, other := range workspaces {

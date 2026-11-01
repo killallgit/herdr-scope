@@ -26,7 +26,11 @@ session.
 - **Folders nest (`nest_folders`).** A project kept as a folder of repositories otherwise
   reads as scattered workspaces. Herdr groups only worktree families, so Scope draws the
   Spaces corner itself and moves the family together in Herdr's list. It nests one level
-  deep, and home or `/` never adopt.
+  deep, and home or `/` never adopt. A worktree belongs to the folder its repository lives
+  in, its checkout open or not.
+- **A family whose parent runs no agent is still one block.** Its members sit under one
+  synthesised row named after the folder (or the repository), not scattered under a row
+  each: a folder that only hosts worktrees reads as the folder.
 
 ## Look
 

@@ -215,26 +215,37 @@ func TestWorktreeBranches(t *testing.T) {
 	p := textPresentation()
 	p.WorktreeMark = "\uF418"
 	for tree, want := range map[domain.TreePosition]string{
-		domain.TreeChild:     zwsp + "  ├─ \uF418 feature",
-		domain.TreeLastChild: zwsp + "  └─ \uF418 feature",
-		domain.TreeOrphan:    "└─ \uF418 feature",
-		domain.TreeDetached:  "\uF418 feature",
+		domain.TreeChild:     zwsp + "  ├─  feature",
+		domain.TreeLastChild: zwsp + "  └─  feature",
+		domain.TreeDetached:  " feature",
 		domain.TreeRoot:      "feature",
 	} {
 		g := domain.SidebarGroup{
-			Label:      "feature",
-			Tree:       tree,
-			Header:     true,
-			OrphanRepo: "app",
-			Rows:       []domain.SidebarRow{{Pane: "w:p1", Display: domain.DisplayIdle}},
+			Label:  "feature",
+			Tree:   tree,
+			Header: true,
+			Rows:   []domain.SidebarRow{{Pane: "w:p1", Display: domain.DisplayIdle}},
 		}
 		tokens := p.PaneTokens(domain.SidebarView{At: at0(), Grouped: true, Groups: []domain.SidebarGroup{g}}, g, 0)
 		assert.Equal(t, want, val(t, tokens, "group"), "tree %d", tree)
-		if tree == domain.TreeOrphan {
-			assert.Equal(t, "app", val(t, tokens, "group_parent"))
-		} else {
-			assert.Empty(t, val(t, tokens, "group_parent"))
+		assert.Empty(t, val(t, tokens, "group_parent"))
+	}
+	// Under a synthesised parent row the header is Herdr's own continuation
+	// row, which arrives indented already.
+	for _, tc := range []struct {
+		tree domain.TreePosition
+		want string
+	}{
+		{domain.TreeChild, "├─  feature"},
+		{domain.TreeLastChild, "└─  feature"},
+	} {
+		g := domain.SidebarGroup{
+			Label: "feature", Tree: tc.tree, Header: true, OrphanRepo: "app",
+			Rows: []domain.SidebarRow{{Pane: "w:p1", Display: domain.DisplayIdle}},
 		}
+		tokens := p.PaneTokens(domain.SidebarView{At: at0(), Grouped: true, Groups: []domain.SidebarGroup{g}}, g, 0)
+		assert.Equal(t, tc.want, val(t, tokens, "group"), "tree %d", tc.tree)
+		assert.Equal(t, "app", val(t, tokens, "group_parent"))
 	}
 	p.WorktreeMark = ""
 	g := domain.SidebarGroup{Label: "feature", Tree: domain.TreeDetached, Header: true, Rows: []domain.SidebarRow{{Pane: "w:p1"}}}

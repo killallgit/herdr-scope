@@ -52,6 +52,18 @@ func TestFoldKeepsWhatWaitsOnYou(t *testing.T) {
 	assert.Equal(t, []PaneID{"search:p1"}, v.Waiting())
 }
 
+func TestFoldLineStandsForAParentWithNoAgent(t *testing.T) {
+	s := folderScenario()
+	s.agents = s.agents[1:]
+	v := s.folded(SortActive, "notes", "acme")
+	assert.Equal(t, []string{
+		"# notes", "0 notes:p1", "",
+		"▸ acme +1 working claude alone", "2 billing:p1",
+		"# └ search", "1 search:p1", "",
+	}, outline(v), "no row is synthesised under the line that names the family")
+	assert.Empty(t, v.Folded, "the only hidden agent carries the line")
+}
+
 func TestAFoldThatKeepsNothingIsOneLine(t *testing.T) {
 	s := folderScenario()
 	s.agents[1].Display = DisplayIdle

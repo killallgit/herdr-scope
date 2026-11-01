@@ -85,7 +85,7 @@ func TestALineThatHidesNothingRidesOnTheFirstRow(t *testing.T) {
 	assert.Equal(t, "▾ acme", val(t, p.PaneTokens(view, search, 0), "fold"), "open for a visit: it folds again on leaving")
 	search.Rows[0].Fold.Open = false
 
-	search.Tree, search.OrphanRepo = domain.TreeOrphan, "acme"
+	search.Tree, search.OrphanRepo = domain.TreeLastChild, "acme"
 	tokens = p.PaneTokens(view, search, 0)
 	assert.Empty(t, val(t, tokens, "group_parent"), "the fold line names the family already")
 	assert.Equal(t, "└─ search", val(t, tokens, "group"))

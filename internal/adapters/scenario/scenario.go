@@ -41,6 +41,9 @@ type Scenario struct {
 	HostGrouped *bool             `json:"host_grouped,omitempty"`
 	Workspaces  []json.RawMessage `json:"workspaces"`
 	Tabs        []json.RawMessage `json:"tabs"`
+	// Panes, when given, say where each workspace was opened (nest_folders
+	// reads a folder from its first pane's cwd).
+	Panes []json.RawMessage `json:"panes,omitempty"`
 	// Activity seeds when panes last worked, as offsets from Start ("-30m").
 	Activity map[string]string `json:"activity"`
 	Steps    []Step            `json:"steps"`
@@ -233,7 +236,7 @@ func decodeStep(mapper herdr.Mapper, s Scenario, step Step, store sidebar.Store)
 	}
 	raw, err := json.Marshal(map[string]any{"snapshot": map[string]any{
 		"version": "scenario", "protocol": 22,
-		"workspaces": s.Workspaces, "tabs": s.Tabs, "panes": []any{}, "agents": agents,
+		"workspaces": s.Workspaces, "tabs": s.Tabs, "panes": s.Panes, "agents": agents,
 	}})
 	if err != nil {
 		return domain.Session{}, fmt.Errorf("snapshot: %w", err)

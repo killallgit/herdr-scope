@@ -73,7 +73,10 @@ func outline(v SidebarView) []string {
 			out = append(out, line)
 		}
 		if g.Header {
-			tree := map[TreePosition]string{TreeRoot: "", TreeChild: "├ ", TreeLastChild: "└ ", TreeOrphan: "@" + g.OrphanRepo + " └ ", TreeDetached: "~ "}[g.Tree]
+			tree := map[TreePosition]string{TreeRoot: "", TreeChild: "├ ", TreeLastChild: "└ ", TreeDetached: "~ "}[g.Tree]
+			if g.OrphanRepo != "" {
+				tree = "@" + g.OrphanRepo + " " + tree
+			}
 			stale := ""
 			if g.Stale {
 				stale = " (stale)"
@@ -169,6 +172,12 @@ func TestOrphanWorktreeGetsARepositoryRow(t *testing.T) {
 		agent("feature", "t1", "p1", 1, DisplayIdle)
 	v := s.build(SortActive, DefaultDisplayPolicy())
 	assert.Equal(t, []string{"# @app └ feature/auth", "1 feature:p1", ""}, outline(v))
+
+	s.ws("hotfix", "hotfix", repo("app", true, "/wt/hotfix")).agent("hotfix", "t1", "p1", 2, DisplayIdle)
+	assert.Equal(t, []string{
+		"# @app ├ feature/auth", "1 feature:p1",
+		"# └ hotfix", "1 hotfix:p1", "",
+	}, outline(s.build(SortActive, DefaultDisplayPolicy())), "siblings share the row")
 }
 
 func TestStrayWorktreeIsDetachedInHerdrOrder(t *testing.T) {

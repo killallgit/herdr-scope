@@ -362,20 +362,21 @@ func (p Presentation) showsAge(state domain.DisplayState) bool {
 }
 
 // groupTokens is the furniture: the header on the run's first row (faded with
-// its workspace when every agent there is stale), a synthesised repository
-// row above an orphan worktree, and a spacer on the run's last row. A fold
-// line stands in for the repository row and puts the header on a
-// continuation line.
+// its workspace when every agent there is stale), a synthesised parent row
+// above the first member of a family whose parent runs no agent, and a
+// spacer on the run's last row. A fold line stands in for the parent row.
+// Under either, the header sits on a continuation line.
 func (p Presentation) groupTokens(tokens Tokens, group domain.SidebarGroup, index int) {
 	if index == 0 && group.Header {
 		folded := group.Rows[0].Fold != nil
-		label := p.branch(group, folded) + group.Label
+		synthesised := group.OrphanRepo != "" && !folded
+		label := p.branch(group, folded || synthesised) + group.Label
 		if group.Stale {
 			tokens.set(tokenGroupStale, label)
 		} else {
 			tokens.set(tokenGroup, label)
 		}
-		if group.Tree == domain.TreeOrphan && !folded {
+		if synthesised {
 			tokens.set(tokenGroupParent, group.OrphanRepo)
 		}
 	}
@@ -386,7 +387,8 @@ func (p Presentation) groupTokens(tokens Tokens, group domain.SidebarGroup, inde
 
 // branch is the tree prefix of a nested header. At zero indent the row keeps
 // the worktree mark and draws no corner; a nested folder is no worktree and
-// wears no mark. A continued header sits on a line Herdr indents already.
+// wears no mark. A continued header sits on a line Herdr indents already:
+// under a fold line or a synthesised parent row.
 func (p Presentation) branch(group domain.SidebarGroup, continued bool) string {
 	mark := ""
 	if p.WorktreeMark != "" && !group.Folder {
@@ -406,13 +408,6 @@ func (p Presentation) branch(group domain.SidebarGroup, continued bool) string {
 			return corner + mark
 		}
 		return p.indent(1) + corner + mark
-	case domain.TreeOrphan:
-		// No indent: under the repository row this is Herdr's own
-		// continuation row, which arrives indented already.
-		if hasIndent {
-			return "└─ " + mark
-		}
-		return mark
 	case domain.TreeDetached:
 		return mark
 	case domain.TreeRoot:
