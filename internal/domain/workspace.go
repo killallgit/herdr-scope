@@ -50,8 +50,9 @@ type WorktreeTree struct {
 	// nested folder's parent workspace. Every linked worktree has one, its
 	// main checkout open or not.
 	ParentLabels map[WorkspaceID]string
-	// Folders are the nested folders among Parents. Herdr draws a worktree
-	// family in its Spaces column itself; these it does not know about.
+	// Folders are the members a folder took in: nested folders, and worktrees
+	// whose checkout is not open. Herdr draws a worktree family in its Spaces
+	// column itself; these it does not know about.
 	Folders map[WorkspaceID]WorkspaceID
 }
 
@@ -140,15 +141,9 @@ func ResolveTree(workspaces []Workspace, nestFolders bool, home string) Worktree
 		}
 	}
 	labels := workspaceLabels(workspaces)
-	for _, ws := range workspaces {
-		if _, ok := nearest[ws.ID]; !ok {
-			continue
-		}
-		root := top(ws.ID)
-		tree.Parents[ws.ID], tree.ParentLabels[ws.ID] = root, labels[root]
-		if !linked(ws) {
-			tree.Folders[ws.ID] = root
-		}
+	for child := range nearest {
+		root := top(child)
+		tree.Parents[child], tree.Folders[child], tree.ParentLabels[child] = root, root, labels[root]
 	}
 	for child, parent := range tree.Parents {
 		root := top(child)

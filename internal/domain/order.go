@@ -65,7 +65,6 @@ type ranking struct {
 	orphanRepo map[WorkspaceID]string
 	detached   map[WorkspaceID]bool
 	splitChild map[PaneID]bool
-	folder     map[WorkspaceID]bool
 }
 
 func (r ranking) keys(agent Agent) SortKeys {
@@ -104,10 +103,7 @@ func rank(entries []orderEntry, tree WorktreeTree) ranking {
 		pane: make(map[PaneID]string, len(entries)), workspace: map[WorkspaceID]string{},
 		tab: make(map[PaneID]string, len(entries)), parentOf: map[WorkspaceID]WorkspaceID{},
 		orphanOf: map[WorkspaceID]WorkspaceID{}, orphanRepo: map[WorkspaceID]string{}, detached: map[WorkspaceID]bool{},
-		splitChild: make(map[PaneID]bool, len(entries)), folder: make(map[WorkspaceID]bool, len(tree.Folders)),
-	}
-	for child := range tree.Folders {
-		r.folder[child] = true
+		splitChild: make(map[PaneID]bool, len(entries)),
 	}
 	minutes := make([]string, len(entries))
 	own := map[WorkspaceID]string{}

@@ -10,7 +10,7 @@ Agents
 
 Spaces
  ◦ proj{space_none}
-   └─ ◦ api{space_none}
+   ├─ ◦ api{space_none}
  § T-1 · api{space_working_claude}
- Λ T-2 · web{space_working_other}
+   └─ Λ T-2 · web{space_working_other}
  § other{space_idle}

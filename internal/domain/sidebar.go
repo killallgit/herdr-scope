@@ -192,7 +192,18 @@ func BuildSidebar(in SidebarInput) SidebarView {
 		spaceCorners(view.Spaces, in.Workspaces, tree)
 	}
 	stale := staleWorkspaces(in.Agents)
-	builder := rowBuilder{in: in, ranks: ranks, grouped: grouped, labels: labels, tabLabels: tabLabels, displays: displays, since: since}
+	// A nested folder's header wears no worktree mark; a worktree a folder
+	// took in keeps its own.
+	folders := map[WorkspaceID]bool{}
+	for _, ws := range in.Workspaces {
+		if _, ok := tree.Folders[ws.ID]; ok && !linked(ws) {
+			folders[ws.ID] = true
+		}
+	}
+	builder := rowBuilder{
+		in: in, ranks: ranks, grouped: grouped, labels: labels, tabLabels: tabLabels,
+		displays: displays, since: since, folders: folders,
+	}
 
 	if !grouped {
 		builder.index(ordered)
@@ -257,6 +268,7 @@ type rowBuilder struct {
 	since     map[PaneID]time.Time
 	carriers  map[PaneID]*Fold
 	borrow    map[PaneID]Agent
+	folders   map[WorkspaceID]bool
 
 	heads     map[PaneID]bool
 	tails     map[PaneID]bool
@@ -461,7 +473,7 @@ func (b *rowBuilder) places(order []WorkspaceID, folded map[WorkspaceID]bool) ma
 func (b *rowBuilder) newGroup(ws WorkspaceID, header bool, p place, stale map[WorkspaceID]bool) SidebarGroup {
 	return SidebarGroup{
 		Workspace: ws, Label: labelOf(b.labels, ws), Tree: p.tree, OrphanRepo: p.parent,
-		Header: header, Stale: stale[ws], Folder: b.ranks.folder[ws],
+		Header: header, Stale: stale[ws], Folder: b.folders[ws],
 	}
 }
 
@@ -521,12 +533,13 @@ func spaces(in SidebarInput, labels map[WorkspaceID]string) []SpaceView {
 	return out
 }
 
-// spaceCorners hangs each nested folder off the workspace above it in the
-// Spaces column, where Herdr only draws worktree families. A member is
-// attached when the row above, as Herdr shows them, is its parent or an
-// attached member of the same family; only attached folders get a corner, so
-// a nested folder Herdr's order put elsewhere stays plain rather than hang off
-// a stranger, and a stray cannot vouch for the next.
+// spaceCorners hangs each member a folder took in (a nested folder, a
+// worktree of a closed checkout) off the workspace above it in the Spaces
+// column, where Herdr only draws worktree families. A member is attached when
+// the row above, as Herdr shows them, is its parent or an attached member of
+// the same family; only attached members get a corner, so one Herdr's order
+// put elsewhere stays plain rather than hang off a stranger, and a stray
+// cannot vouch for the next.
 func spaceCorners(spaces []SpaceView, workspaces []Workspace, tree WorktreeTree) {
 	order := hostSpaceOrder(workspaces)
 	attached := map[WorkspaceID]bool{}

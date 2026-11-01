@@ -99,8 +99,24 @@ func TestResolveTreeHangsALoneWorktreeUnderItsRepositorysFolder(t *testing.T) {
 	tree := ResolveTree(workspaces, true, "/home/user")
 	assert.Equal(t, map[WorkspaceID]WorkspaceID{"billing-fix": "acme"}, tree.Parents,
 		"the checkout is closed, but its repository lives in the folder")
-	assert.Empty(t, tree.Folders, "a worktree is no folder")
+	assert.Equal(t, map[WorkspaceID]WorkspaceID{"billing-fix": "acme"}, tree.Folders,
+		"the folder took it in: Herdr draws no family for it")
 	assert.Equal(t, map[WorkspaceID]string{"billing-fix": "acme", "notes-fix": "notes"}, tree.ParentLabels)
+}
+
+func TestSpaceCornersHangALoneWorktreeOffItsFolder(t *testing.T) {
+	workspaces := []Workspace{
+		folder("acme", "/home/user/acme"),
+		checkout("gateway", "/home/user/acme/externals/gateway", false, "gateway"),
+		checkout("billing-fix", "/home/user/wt/billing-fix", true, "billing"),
+	}
+	workspaces[2].Repository.Root = "/home/user/acme/services/billing"
+	corners := map[WorkspaceID]Corner{}
+	for _, space := range BuildSidebar(SidebarInput{At: at(0), Mode: SortActive, Policy: DefaultDisplayPolicy(), Workspaces: workspaces, Home: "/home/user"}).Spaces {
+		corners[space.Workspace] = space.Corner
+	}
+	assert.Equal(t, map[WorkspaceID]Corner{"acme": CornerNone, "gateway": CornerTee, "billing-fix": CornerLast}, corners,
+		"nobody else draws the worktree's corner: its checkout is closed")
 }
 
 func TestResolveTreeReadsWindowsPaths(t *testing.T) {
@@ -209,6 +225,14 @@ func TestFamilyWithoutAParentStaysOneBlock(t *testing.T) {
 		"# └ search", "1 search:p1", "",
 		"# notes", "0 notes:p1", "",
 	}, outline(nestedInput(s)), "one synthesised row for the folder; a worktree of a closed checkout belongs too")
+	for _, g := range nestedInput(s).Groups {
+		switch g.Workspace {
+		case "jobs-fix", "billing-fix":
+			assert.False(t, g.Folder, "%s keeps its worktree mark", g.Workspace)
+		case "search":
+			assert.True(t, g.Folder, "a nested folder wears none")
+		}
+	}
 }
 
 func nestedInput(s *scenario) SidebarView {

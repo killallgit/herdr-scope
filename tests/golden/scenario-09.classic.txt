@@ -12,7 +12,7 @@ Agents
 
 Spaces
  ◦ · proj
-   └─ ◦ · api
+   ├─ ◦ · api
  § · T-1 · api
- Λ · T-2 · web
+   └─ Λ · T-2 · web
  § · other
