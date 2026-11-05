@@ -88,7 +88,8 @@ type folding struct {
 
 // fold splits the display order into the rows the panel shows and the rows
 // the folds hide. A folded family keeps every agent that waits on the user,
-// the focused agent and those of the focused workspace. Its line is a row of
+// the focused agent and those of the focused workspace, and a lone agent: a
+// line in its place would say less in as much room. Its line is a row of
 // its own at the head of the family, carried by the first agent it hides, so
 // that going to the line means going to a hidden agent; a fold that hides
 // nothing hangs its line on the family's first row.
@@ -97,8 +98,11 @@ func fold(ordered []orderEntry, in SidebarInput, tree WorktreeTree, displays map
 		return folding{shown: ordered}
 	}
 	f := foldPass{
-		in: in, tree: tree, displays: displays,
+		in: in, tree: tree, displays: displays, size: map[WorkspaceID]int{},
 		folds: map[WorkspaceID]*Fold{}, first: map[WorkspaceID]Agent{}, carrier: map[WorkspaceID]orderEntry{},
+	}
+	for _, e := range ordered {
+		f.size[tree.Root(e.agent.Workspace)]++
 	}
 	f.survey(ordered)
 	return f.place(ordered)
@@ -109,14 +113,17 @@ type foldPass struct {
 	in       SidebarInput
 	tree     WorktreeTree
 	displays map[PaneID]DisplayState
-	folds    map[WorkspaceID]*Fold
+	// size counts each family's agents.
+	size  map[WorkspaceID]int
+	folds map[WorkspaceID]*Fold
 	// first is each folded family's first row, carrier the first it hides.
 	first   map[WorkspaceID]Agent
 	carrier map[WorkspaceID]orderEntry
 }
 
 func (f *foldPass) keeps(e orderEntry) bool {
-	return f.in.Opened[f.tree.Root(e.agent.Workspace)] || f.displays[e.agent.Pane].Waiting() ||
+	root := f.tree.Root(e.agent.Workspace)
+	return f.in.Opened[root] || f.size[root] < 2 || f.displays[e.agent.Pane].Waiting() ||
 		e.agent.Focused || e.agent.Workspace == f.in.Focused
 }
 

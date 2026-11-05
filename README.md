@@ -83,7 +83,7 @@ Scope binds no keys itself. `bin/herdr-scope configure --keys` prints the snippe
 | `prefix+u` | `jump` | the next agent waiting on you: questions first, then unseen results |
 | `prefix+a` | `view-flip` | order: active ↔ recent |
 | `prefix+f` | `view-here` | only this workspace ↔ all |
-| `prefix+m` | `fold` | fold ↔ unfold this folder; agents waiting on you stay visible |
+| `prefix+m` | `fold` | fold ↔ unfold this folder; agents waiting on you, or alone in it, stay visible |
 | `prefix+,` | `settings` | the settings popup |
 
 ```toml

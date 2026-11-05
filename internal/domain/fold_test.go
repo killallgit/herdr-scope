@@ -75,6 +75,14 @@ func TestAFoldThatKeepsNothingIsOneLine(t *testing.T) {
 	assert.Equal(t, []PaneID{"search:p1", "billing:p1"}, panesOf(v.Folded))
 }
 
+func TestAFoldKeepsALoneAgent(t *testing.T) {
+	v := folderScenario().folded(SortActive, "acme", "notes")
+	assert.Equal(t, []string{
+		"▸ notes +0", "0 notes:p1", "",
+	}, outline(v)[:3], "the only agent stays under the line, which stands for the header")
+	assert.Empty(t, v.Folded)
+}
+
 func TestFoldNeverHidesTheFocus(t *testing.T) {
 	v := folderScenario().folded(SortActive, "acme", "acme")
 	assert.Equal(t, []string{
