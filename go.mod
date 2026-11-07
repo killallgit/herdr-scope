@@ -1,4 +1,4 @@
-module github.com/kriuchkov/herdr-scope
+module github.com/killallgit/herdr-scope
 
 go 1.26.5
 

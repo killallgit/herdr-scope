@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/domain"
 )
 
 // Observer reads agents and sessions; it implements ports.AgentSource,

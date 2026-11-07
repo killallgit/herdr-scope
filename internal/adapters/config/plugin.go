@@ -15,8 +15,8 @@ import (
 
 	"github.com/BurntSushi/toml"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 // PluginFile is the plugin's own config.toml. Every key has a default, so a

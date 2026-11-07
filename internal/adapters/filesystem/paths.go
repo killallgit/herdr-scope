@@ -12,7 +12,7 @@ import (
 
 // defaultPluginID is the plugin id when Herdr did not inject one (a bare
 // shell run). Herdr's convention is <github owner>.<repo>.
-const defaultPluginID = "kriuchkov.herdr-scope"
+const defaultPluginID = "killallgit.herdr-scope"
 
 // Env reads one environment variable.
 type Env func(key string) string

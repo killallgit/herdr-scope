@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/domain"
 )
 
 // iTerm2's preferences domain, read with `defaults export` (read-only: it

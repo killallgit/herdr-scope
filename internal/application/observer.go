@@ -10,8 +10,8 @@ import (
 	"slices"
 	"time"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 // Observer timings that are not settings.

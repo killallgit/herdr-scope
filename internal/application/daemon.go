@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 // MinProtocol is the oldest Herdr socket protocol Scope supports.

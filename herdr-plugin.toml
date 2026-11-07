@@ -1,4 +1,4 @@
-id = "kriuchkov.herdr-scope"
+id = "killallgit.herdr-scope"
 name = "Herdr Scope"
 version = "1.1.2"
 min_herdr_version = "0.9.0"
@@ -10,7 +10,7 @@ platforms = ["linux", "macos", "windows"]
 # three ways:
 #
 #   - Release install, no Go needed: `herdr plugin install
-#     kriuchkov/herdr-scope --ref release` (or `--ref vX.Y.Z-bin` to pin a
+#     killallgit/herdr-scope --ref release` (or `--ref vX.Y.Z-bin` to pin a
 #     version) checks out the tree the release workflow publishes: the tagged
 #     source plus prebuilt bin/herdr-scope-<os>-<arch>[.exe] for macOS, Linux
 #     and Windows on amd64 and arm64. The step copies this machine's binary.

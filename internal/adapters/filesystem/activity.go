@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 // tailBytes is how much of a transcript is read: only its end, enough to

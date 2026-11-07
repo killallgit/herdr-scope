@@ -11,8 +11,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 // Resolver implements ports.RepositoryResolver.

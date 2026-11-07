@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/domain"
 )
 
 // ShowingReader reads which display state Scope's published tokens say a

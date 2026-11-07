@@ -12,13 +12,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/kriuchkov/herdr-scope/internal/adapters/config"
-	"github.com/kriuchkov/herdr-scope/internal/adapters/control"
-	"github.com/kriuchkov/herdr-scope/internal/adapters/filesystem"
-	"github.com/kriuchkov/herdr-scope/internal/adapters/tui"
-	"github.com/kriuchkov/herdr-scope/internal/application"
-	"github.com/kriuchkov/herdr-scope/internal/domain"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/adapters/config"
+	"github.com/killallgit/herdr-scope/internal/adapters/control"
+	"github.com/killallgit/herdr-scope/internal/adapters/filesystem"
+	"github.com/killallgit/herdr-scope/internal/adapters/tui"
+	"github.com/killallgit/herdr-scope/internal/application"
+	"github.com/killallgit/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 // Main runs the command line and returns the exit code.

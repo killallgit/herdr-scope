@@ -4,8 +4,8 @@
 package sidebar
 
 import (
-	"github.com/kriuchkov/herdr-scope/internal/domain"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 // GenericMark is worn by an agent Scope has no mark for: the row keeps its

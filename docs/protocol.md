@@ -92,7 +92,7 @@ model dirty, and the next frame reads the authoritative snapshot.
 
 `null` clears a token. Indentation rides on a leading U+200B, which `trim()` keeps. A report
 to a target that is gone (`pane_not_found`, `workspace_not_found`) counts as landed. Every
-write carries `source = "plugin:kriuchkov.herdr-scope"`, so Scope's clears cannot touch
+write carries `source = "plugin:killallgit.herdr-scope"`, so Scope's clears cannot touch
 another plugin's token.
 
 ## Sidebar rows

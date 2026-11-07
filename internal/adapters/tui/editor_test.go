@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/kriuchkov/herdr-scope/internal/adapters/config"
-	"github.com/kriuchkov/herdr-scope/internal/application"
-	"github.com/kriuchkov/herdr-scope/internal/domain"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/adapters/config"
+	"github.com/killallgit/herdr-scope/internal/application"
+	"github.com/killallgit/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 // fakeBackend stands in for the config file, the two live switches and the

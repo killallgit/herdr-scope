@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 // Health thresholds for a daemon that answers but may not be drawing.

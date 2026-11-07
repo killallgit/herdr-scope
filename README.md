@@ -1,7 +1,7 @@
 # Herdr Scope
 
 <p align="center">
-  <a href="https://github.com/kriuchkov/herdr-scope/actions/workflows/ci.yml"><img alt="tests" src="https://github.com/kriuchkov/herdr-scope/actions/workflows/ci.yml/badge.svg?branch=master"></a>
+  <a href="https://github.com/killallgit/herdr-scope/actions/workflows/ci.yml"><img alt="tests" src="https://github.com/killallgit/herdr-scope/actions/workflows/ci.yml/badge.svg?branch=master"></a>
   <img alt="Go 1.26" src="https://img.shields.io/badge/Go-1.26-00ADD8?logo=go&logoColor=white">
   <img alt="Herdr 0.9+" src="https://img.shields.io/badge/Herdr-0.9%2B-89b4fa">
   <a href="LICENSE"><img alt="license MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
@@ -20,6 +20,14 @@
 A sidebar for [Herdr](https://herdr.dev) that shows which agent is working, which one waits on
 you, and which finished while you were away. It only watches and paints: it never starts,
 prompts or stops an agent.
+
+## Upstream credit
+
+This repository, [killallgit/herdr-scope](https://github.com/killallgit/herdr-scope),
+is a fork of [kriuchkov/herdr-scope](https://github.com/kriuchkov/herdr-scope)
+by **Nikita Kriuchkov**. His original Herdr Scope implementation is the foundation
+for this fork's development. The original MIT copyright and license remain in
+[LICENSE](LICENSE); additional attributions are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Features
 
@@ -47,30 +55,29 @@ prompts or stops an agent.
 ## Install
 
 ```sh
-herdr plugin install kriuchkov/herdr-scope --ref release
+herdr plugin install killallgit/herdr-scope --ref release
 ```
 
-The `release` branch carries prebuilt binaries for macOS, Linux and Windows. Without `--ref`,
-as the [plugin catalog](https://herdr.dev/plugins/) installs it, Herdr builds from source
-with Go 1.26+. Without Go, it downloads the release binary and checks its checksum. Setup
+The `release` branch carries prebuilt binaries for macOS, Linux and Windows once
+published for this fork. Without `--ref`, Herdr builds from source with Go 1.26+. Without Go, it downloads the release binary and checks its checksum. Setup
 adds Scope's blocks to Herdr's `config.toml` between `HERDR-SCOPE` markers and installs the
 icon font for your user. It requires Herdr 0.9+ (protocol 22).
 
 > [!IMPORTANT]
 > If the sidebar has not changed, start the daemon:
-> `herdr plugin action invoke kriuchkov.herdr-scope.state-start`.
+> `herdr plugin action invoke killallgit.herdr-scope.state-start`.
 > Never run `herdr server stop` to restart anything: it ends every pane.
 
 To update, restart the daemon after updating the plugin. To uninstall, run these in order;
 your `config.toml` comes back byte for byte:
 
 ```sh
-herdr plugin update kriuchkov.herdr-scope                              # update
-herdr plugin action invoke kriuchkov.herdr-scope.state-start
+herdr plugin update killallgit.herdr-scope                              # update
+herdr plugin action invoke killallgit.herdr-scope.state-start
 
-herdr plugin action invoke kriuchkov.herdr-scope.unconfigure           # uninstall
-herdr plugin action invoke kriuchkov.herdr-scope.uninstall-font
-herdr plugin uninstall kriuchkov.herdr-scope
+herdr plugin action invoke killallgit.herdr-scope.unconfigure           # uninstall
+herdr plugin action invoke killallgit.herdr-scope.uninstall-font
+herdr plugin uninstall killallgit.herdr-scope
 ```
 
 ## Keys
@@ -90,10 +97,15 @@ Scope binds no keys itself. `bin/herdr-scope configure --keys` prints the snippe
 [[keys.command]]
 key = "prefix+u"
 type = "plugin_action"
-command = "kriuchkov.herdr-scope.jump"
+command = "killallgit.herdr-scope.jump"
 ```
 
 ## Configuration
+
+This fork uses plugin ID `killallgit.herdr-scope`, with separate configuration and
+state directories from upstream installations. Existing settings and key bindings
+are not migrated automatically. Before switching, unconfigure and uninstall the
+upstream plugin using its own instructions; keep a backup of your settings.
 
 `prefix+,` opens the popup: `↑↓` select, `←→` change, `s` save. A save is validated and
 applied at once. The most used options:
@@ -141,6 +153,20 @@ make golden    # rewrite tests/golden after an intended change to the look
 From a checkout: `make build && herdr plugin link .` (`plugin link` runs no build step).
 [Architecture](docs/architecture.md), [Herdr protocol notes](docs/protocol.md),
 [design decisions](docs/design.md). `docs/demo/record.sh` re-records the GIF.
+
+### Release verification
+
+Run a non-publishing release rehearsal on the branch to test and package all six
+platform binaries:
+
+```sh
+gh workflow run release.yml --ref <branch>
+```
+
+Manual runs upload the release artifacts but skip publishing. To publish after
+merging, keep `herdr-plugin.toml` and `internal/bootstrap/version.go` at the same
+new version, then push its `vX.Y.Z` tag. The release workflow publishes the
+archives, checksums, `vX.Y.Z-bin` tag, and (for stable versions) `release` branch.
 
 ## License
 

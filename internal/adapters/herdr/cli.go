@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/domain"
 )
 
 const cliTimeout = 10 * time.Second

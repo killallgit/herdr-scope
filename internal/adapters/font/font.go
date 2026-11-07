@@ -20,8 +20,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 // iconFamily is the icon font's family name. It never changes between builds: a

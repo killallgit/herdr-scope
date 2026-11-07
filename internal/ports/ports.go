@@ -6,7 +6,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/domain"
 )
 
 // AgentSource reads the live agent list — the cheap per-frame refresh.

@@ -14,11 +14,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kriuchkov/herdr-scope/internal/adapters/config"
-	"github.com/kriuchkov/herdr-scope/internal/adapters/herdr"
-	"github.com/kriuchkov/herdr-scope/internal/adapters/sidebar"
-	"github.com/kriuchkov/herdr-scope/internal/domain"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/adapters/config"
+	"github.com/killallgit/herdr-scope/internal/adapters/herdr"
+	"github.com/killallgit/herdr-scope/internal/adapters/sidebar"
+	"github.com/killallgit/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 // Home is the home directory scenarios are written against.

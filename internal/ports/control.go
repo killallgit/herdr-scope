@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/domain"
 )
 
 // ControlCommand names a request to the resident daemon.

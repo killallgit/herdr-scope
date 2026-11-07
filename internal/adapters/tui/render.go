@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kriuchkov/herdr-scope/internal/adapters/config"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/adapters/config"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 // SGR sequences, the popup's palette.

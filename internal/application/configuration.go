@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 // UpdateConfiguration validates and saves settings, then tells the daemon to

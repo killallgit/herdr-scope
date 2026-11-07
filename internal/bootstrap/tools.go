@@ -6,9 +6,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/kriuchkov/herdr-scope/internal/adapters/scenario"
-	"github.com/kriuchkov/herdr-scope/internal/adapters/sidebar"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/adapters/scenario"
+	"github.com/killallgit/herdr-scope/internal/adapters/sidebar"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 func renderCommand() *cobra.Command {

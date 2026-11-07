@@ -14,7 +14,7 @@ import (
 
 	herdrapi "github.com/cyperx84/herdr-api"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/domain"
 )
 
 const (

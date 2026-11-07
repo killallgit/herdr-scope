@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/domain"
 )
 
 // envelope accepts either a whole response line or just its result.

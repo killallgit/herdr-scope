@@ -14,10 +14,10 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/kriuchkov/herdr-scope/internal/adapters/config"
-	"github.com/kriuchkov/herdr-scope/internal/application"
-	"github.com/kriuchkov/herdr-scope/internal/domain"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/adapters/config"
+	"github.com/killallgit/herdr-scope/internal/application"
+	"github.com/killallgit/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 // Deps is what the popup reads and saves through. The two live switches

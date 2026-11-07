@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kriuchkov/herdr-scope/internal/adapters/filesystem"
-	"github.com/kriuchkov/herdr-scope/internal/application"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/adapters/filesystem"
+	"github.com/killallgit/herdr-scope/internal/application"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 // maxLog bounds the daemon log; one older generation is kept.
