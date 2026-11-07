@@ -12,8 +12,6 @@ import (
 
 // brandColor is a vendor's own published hue. Green and red stay out — they
 // mean done and blocked. A vendor absent here has no hue and draws in ink.
-//
-//nolint:goconst // table data: one literal per cell
 func brandColors() []struct {
 	Kind  domain.AgentKind
 	Color string

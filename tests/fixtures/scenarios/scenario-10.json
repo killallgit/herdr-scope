@@ -1,0 +1,62 @@
+{
+  "name": "scenario-10",
+  "description": "folds: visiting a carrier opens its family until focus leaves; a lone agent stays visible",
+  "start": "2026-10-23T12:00:00Z",
+  "config": "variant = \"text\"\nidle_grace_seconds = 0\nshow_age = \"all\"\n",
+  "mode": "active",
+  "folded": ["w1", "w3"],
+  "workspaces": [
+    {"workspace_id": "w1", "number": 1, "label": "acme"},
+    {"workspace_id": "w2", "number": 2, "label": "billing"},
+    {"workspace_id": "w3", "number": 3, "label": "notes"}
+  ],
+  "tabs": [
+    {"tab_id": "w1:t1", "workspace_id": "w1", "number": 1, "label": "1"},
+    {"tab_id": "w2:t1", "workspace_id": "w2", "number": 1, "label": "1"},
+    {"tab_id": "w3:t1", "workspace_id": "w3", "number": 1, "label": "1"}
+  ],
+  "panes": [
+    {"pane_id": "w1:p1", "workspace_id": "w1", "cwd": "/home/user/acme"},
+    {"pane_id": "w2:p1", "workspace_id": "w2", "cwd": "/home/user/acme/billing"},
+    {"pane_id": "w3:p1", "workspace_id": "w3", "cwd": "/home/user/notes"}
+  ],
+  "activity": {"w1:p1": "-2m", "w2:p1": "-1m", "w3:p1": "-5m"},
+  "steps": [
+    {
+      "at": "0s",
+      "focused_workspace_id": "w3",
+      "agents": [
+        {"pane_id": "w1:p1", "terminal_id": "term_acme", "workspace_id": "w1", "tab_id": "w1:t1", "agent": "claude", "agent_status": "idle", "focused": false, "terminal_title_stripped": "Draft release notes", "revision": 1},
+        {"pane_id": "w2:p1", "terminal_id": "term_billing", "workspace_id": "w2", "tab_id": "w2:t1", "agent": "codex", "agent_status": "working", "focused": false, "terminal_title_stripped": "Ledger rows", "revision": 1},
+        {"pane_id": "w3:p1", "terminal_id": "term_notes", "workspace_id": "w3", "tab_id": "w3:t1", "agent": "claude", "agent_status": "idle", "focused": true, "terminal_title_stripped": "Plan next week", "revision": 1}
+      ]
+    },
+    {
+      "at": "1s",
+      "focused_workspace_id": "w1",
+      "agents": [
+        {"pane_id": "w1:p1", "terminal_id": "term_acme", "workspace_id": "w1", "tab_id": "w1:t1", "agent": "claude", "agent_status": "idle", "focused": true, "terminal_title_stripped": "Draft release notes", "revision": 1},
+        {"pane_id": "w2:p1", "terminal_id": "term_billing", "workspace_id": "w2", "tab_id": "w2:t1", "agent": "codex", "agent_status": "working", "focused": false, "terminal_title_stripped": "Ledger rows", "revision": 1},
+        {"pane_id": "w3:p1", "terminal_id": "term_notes", "workspace_id": "w3", "tab_id": "w3:t1", "agent": "claude", "agent_status": "idle", "focused": false, "terminal_title_stripped": "Plan next week", "revision": 1}
+      ]
+    },
+    {
+      "at": "2s",
+      "focused_workspace_id": "w2",
+      "agents": [
+        {"pane_id": "w1:p1", "terminal_id": "term_acme", "workspace_id": "w1", "tab_id": "w1:t1", "agent": "claude", "agent_status": "idle", "focused": false, "terminal_title_stripped": "Draft release notes", "revision": 1},
+        {"pane_id": "w2:p1", "terminal_id": "term_billing", "workspace_id": "w2", "tab_id": "w2:t1", "agent": "codex", "agent_status": "working", "focused": true, "terminal_title_stripped": "Ledger rows", "revision": 1},
+        {"pane_id": "w3:p1", "terminal_id": "term_notes", "workspace_id": "w3", "tab_id": "w3:t1", "agent": "claude", "agent_status": "idle", "focused": false, "terminal_title_stripped": "Plan next week", "revision": 1}
+      ]
+    },
+    {
+      "at": "3s",
+      "focused_workspace_id": "w3",
+      "agents": [
+        {"pane_id": "w1:p1", "terminal_id": "term_acme", "workspace_id": "w1", "tab_id": "w1:t1", "agent": "claude", "agent_status": "idle", "focused": false, "terminal_title_stripped": "Draft release notes", "revision": 1},
+        {"pane_id": "w2:p1", "terminal_id": "term_billing", "workspace_id": "w2", "tab_id": "w2:t1", "agent": "codex", "agent_status": "working", "focused": false, "terminal_title_stripped": "Ledger rows", "revision": 1},
+        {"pane_id": "w3:p1", "terminal_id": "term_notes", "workspace_id": "w3", "tab_id": "w3:t1", "agent": "claude", "agent_status": "idle", "focused": true, "terminal_title_stripped": "Plan next week", "revision": 1}
+      ]
+    }
+  ]
+}

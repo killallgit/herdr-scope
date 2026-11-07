@@ -10,7 +10,7 @@
 package integration
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
 	"os"
 	"os/exec"
@@ -50,12 +50,15 @@ func (e *env) environ() []string {
 		"XDG_CONFIG_HOME=" + filepath.Join(e.root, "config"),
 		"XDG_STATE_HOME=" + filepath.Join(e.root, "state"),
 		"TERM=xterm-256color",
+		"GORACE=halt_on_error=1 log_path=" + filepath.Join(e.root, "race"),
 	}
 }
 
 func (e *env) run(args ...string) string {
 	e.t.Helper()
-	cmd := exec.Command(e.herdr, args...)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, e.herdr, args...)
 	cmd.Env = e.environ()
 	out, err := cmd.CombinedOutput()
 	require.NoError(e.t, err, "herdr %v: %s", args, out)
@@ -73,7 +76,9 @@ func (e *env) json(args ...string) map[string]any {
 // dump puts the plugin's command log and the daemon's log in the test
 // output, so a failure says why.
 func (e *env) dump() {
-	cmd := exec.Command(e.herdr, "plugin", "log", "list", "--plugin", pluginID, "--limit", "5")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, e.herdr, "plugin", "log", "list", "--plugin", pluginID, "--limit", "5")
 	cmd.Env = e.environ()
 	out, _ := cmd.CombinedOutput()
 	e.t.Logf("plugin log:\n%s", out)
@@ -94,14 +99,13 @@ func (e *env) startServer() {
 	e.t.Helper()
 	cmd := exec.Command(e.herdr, "server")
 	cmd.Env = e.environ()
-	var log bytes.Buffer
-	cmd.Stdout, cmd.Stderr = &log, &log
+	cmd.Stdout, cmd.Stderr = os.Stderr, os.Stderr
 	require.NoError(e.t, cmd.Start())
 	e.server = cmd
 	require.Eventually(e.t, func() bool {
 		_, err := os.Stat(e.socket())
 		return err == nil
-	}, 10*time.Second, 50*time.Millisecond, "the isolated server never opened its socket: %s", log.String())
+	}, 10*time.Second, 50*time.Millisecond, "the isolated server never opened its socket")
 }
 
 // stopServer ends only the server this test started, by its own process.
@@ -116,6 +120,7 @@ func (e *env) stopServer() {
 	case <-done:
 	case <-time.After(5 * time.Second):
 		_ = e.server.Process.Kill()
+		<-done
 	}
 	e.server = nil
 }
@@ -129,26 +134,38 @@ func setup(t *testing.T) *env {
 	if herdrBin == "" {
 		var err error
 		herdrBin, err = exec.LookPath("herdr")
-		if err != nil {
-			t.Skip("herdr not installed")
-		}
+		require.NoError(t, err, "integration was requested but herdr is not installed")
 	}
 	// Short: a Unix socket path must stay under 104 bytes.
-	root, err := os.MkdirTemp("", "hsi") //nolint:usetesting // socket path length
+	root, err := os.MkdirTemp("/tmp", "hsi") //nolint:usetesting // socket path length
 	require.NoError(t, err)
 	e := &env{t: t, herdr: herdrBin, root: root, plugin: filepath.Join(root, "plugin")}
 	t.Cleanup(func() {
 		if t.Failed() {
 			e.dump()
 		}
+		if e.server != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			stop := exec.CommandContext(ctx, filepath.Join(e.plugin, "bin", "herdr-scope"), "state-stop")
+			stop.Env = append(e.environ(), "HERDR_BIN_PATH="+e.herdr)
+			out, stopErr := stop.CombinedOutput()
+			assert.NoError(t, stopErr, "isolated Scope shutdown: %s", out)
+		}
 		e.stopServer()
+		reports, globErr := filepath.Glob(filepath.Join(root, "race.*"))
+		assert.NoError(t, globErr)
+		for _, report := range reports {
+			raw, _ := os.ReadFile(report)
+			t.Errorf("instrumented child reported a data race: %s\n%s", report, raw)
+		}
 		_ = os.RemoveAll(root)
 	})
 	for _, dir := range []string{"home", "config/herdr", "state", "plugin/bin", "plugin/dist"} {
 		require.NoError(t, os.MkdirAll(filepath.Join(root, dir), 0o700))
 	}
 	repo := repoRoot(t)
-	build := exec.Command("go", "build", "-o", filepath.Join(e.plugin, "bin", "herdr-scope"), "./cmd/herdr-scope")
+	build := exec.Command("go", "build", "-race", "-o", filepath.Join(e.plugin, "bin", "herdr-scope"), "./cmd/herdr-scope")
 	build.Dir = repo
 	out, err := build.CombinedOutput()
 	require.NoError(t, err, string(out))
@@ -227,6 +244,7 @@ func TestScopeAgainstARealHerdr(t *testing.T) {
 	// One frame writes each pane with its own request: the other may land a
 	// moment later.
 	e.eventually(func() bool { return e.title(other) == "title_blocked" }, "the blocked agent was never painted")
+	require.FileExists(t, filepath.Join(e.stateDir(), "control.sock"))
 	assert.Contains(t, e.agents()[pane].Tokens, "sort_key")
 	config, err := os.ReadFile(e.configFile())
 	require.NoError(t, err)
@@ -286,7 +304,7 @@ func TestScopeAgainstARealHerdr(t *testing.T) {
 	assert.Contains(t, string(raw), "# >>> HERDR-SCOPE-BEGIN sidebar", "with its blocks")
 
 	t.Log("a rebuilt bin/ takes over at the next start, without a stop first")
-	rebuild := exec.Command("go", "build", "-ldflags", "-X main.version=0.0.0-rebuilt",
+	rebuild := exec.Command("go", "build", "-race", "-ldflags", "-X main.version=0.0.0-rebuilt",
 		"-o", filepath.Join(e.plugin, "bin", "herdr-scope"), "./cmd/herdr-scope")
 	rebuild.Dir = repoRoot(t)
 	out, err := rebuild.CombinedOutput()

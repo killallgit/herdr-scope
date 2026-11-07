@@ -3,8 +3,6 @@ package domain
 // knownAgents lists the agent kinds Scope recognises, in the order the glyph
 // tables use, with the name a row shows when the agent never sets a title.
 // Kinds are the ids Herdr reports, which is why Antigravity is "agy".
-//
-//nolint:goconst // catalogue data: each literal is one table cell, not a repeated constant
 func knownAgents() []struct {
 	Kind AgentKind
 	Name string

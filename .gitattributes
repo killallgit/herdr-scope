@@ -1,3 +1,5 @@
+* text=auto eol=lf
+
 # cmd.exe parses batch files with LF line endings unreliably; check them out
 # with CRLF everywhere, and keep the POSIX build script LF.
 *.cmd text eol=crlf

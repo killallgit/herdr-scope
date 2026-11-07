@@ -93,8 +93,7 @@ session.
 
 ## Not verified
 
-- Windows builds and lints but has not been run. Whether Herdr's launcher resolves
-  `bin/herdr-scope` to `.exe` is unconfirmed.
+- Windows source is retained, but Windows is excluded from platform CI and releases.
 - Linux is unit-tested by faking the OS, not run on a host.
 - The settings popup's raw-terminal handling is covered by its state-machine tests only.
 - Kilo activity needs `sqlite3` on PATH; without it, Kilo panes read as plain idle.

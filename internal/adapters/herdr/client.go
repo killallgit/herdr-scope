@@ -79,8 +79,7 @@ func (c *Client) call(ctx context.Context, method string, params, out any) error
 // itself and wraps a decode failure with %w, so a result of the wrong shape
 // still reads as a decode error.
 func classify(method string, err error) error {
-	var apiErr *herdrapi.APIError
-	if errors.As(err, &apiErr) {
+	if apiErr, ok := errors.AsType[*herdrapi.APIError](err); ok {
 		return &APIError{Method: method, Code: apiErr.Code, Message: apiErr.Message}
 	}
 	var syntax *json.SyntaxError

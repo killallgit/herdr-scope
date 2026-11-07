@@ -21,8 +21,6 @@ type vendorGlyphs struct {
 }
 
 // vendorTable is every vendor's mark: its icon-font codepoint and its text form.
-//
-//nolint:goconst // table data: one literal per cell
 func vendorTable() []vendorGlyphs {
 	return []vendorGlyphs{
 		{"claude", "\uE1A0", "§"}, {"codex", "\uE1A1", "Λ"}, {"opencode", "\uE1A2", "◇"},

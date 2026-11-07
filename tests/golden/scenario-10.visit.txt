@@ -1,0 +1,13 @@
+# a visit shows the folded family whole until focus leaves
+Agents
+ ▾ acme
+   § 2m Draft release notes
+   └─ billing
+     Λ ⣽ Ledger rows
+ ▸ notes
+   § 5m Plan next week
+
+Spaces
+ § acme
+   └─ Λ billing
+ § notes

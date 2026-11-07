@@ -102,8 +102,7 @@ func (p *Probe) probe(ctx context.Context) ports.Appearance {
 // ExecRunner runs probes as real processes.
 func ExecRunner(ctx context.Context, name string, args ...string) (string, int, error) {
 	out, err := exec.CommandContext(ctx, name, args...).Output()
-	var exit *exec.ExitError
-	if errors.As(err, &exit) {
+	if exit, ok := errors.AsType[*exec.ExitError](err); ok {
 		return string(out), exit.ExitCode(), nil
 	}
 	if err != nil {

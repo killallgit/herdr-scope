@@ -73,6 +73,20 @@ func TestGoldenAges(t *testing.T) {
 	}
 }
 
+func TestGoldenFoldVisit(t *testing.T) {
+	file := filepath.Join(root(t), "fixtures", "scenarios", "scenario-10.json")
+	for layout, infix := range map[ports.Layout]string{ports.LayoutCompact: "", ports.LayoutClassic: ".classic"} {
+		name := "scenario-10" + infix + ".visit"
+		t.Run(name, func(t *testing.T) {
+			s, err := scenario.Load(file)
+			require.NoError(t, err)
+			s.Description = "a visit shows the folded family whole until focus leaves"
+			s.Steps = s.Steps[:2]
+			testGolden(t, s, layout, name)
+		})
+	}
+}
+
 func testGolden(t *testing.T, s scenario.Scenario, layout ports.Layout, name string) {
 	t.Helper()
 	s.Layout = layout
