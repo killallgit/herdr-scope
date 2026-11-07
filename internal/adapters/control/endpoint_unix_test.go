@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 func TestALongRuntimeDirGetsAShortEndpoint(t *testing.T) {
-	long := "/Users/someone-with-a-long-name/.local/state/herdr/plugins/kriuchkov.herdr-scope/runtime-a-named-session"
+	long := "/Users/someone-with-a-long-name/.local/state/herdr/plugins/killallgit.herdr-scope/runtime-a-named-session"
 	at := Endpoint(long, "")
 	assert.LessOrEqual(t, len(at), maxSocketPath)
 	assert.Equal(t, at, Endpoint(long, ""), "the same session always gets the same endpoint")

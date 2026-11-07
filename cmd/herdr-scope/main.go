@@ -6,7 +6,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/kriuchkov/herdr-scope/internal/bootstrap"
+	"github.com/killallgit/herdr-scope/internal/bootstrap"
 )
 
 // version overrides bootstrap.Version at build time

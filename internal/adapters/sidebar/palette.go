@@ -1,8 +1,8 @@
 package sidebar
 
 import (
-	"github.com/kriuchkov/herdr-scope/internal/domain"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 // The palette is every colour Scope puts on screen. Sidebar token colours

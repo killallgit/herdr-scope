@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/domain"
 )
 
 // maxTokensPerReport is the server's ceiling on one metadata report; a patch

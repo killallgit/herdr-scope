@@ -14,7 +14,8 @@ set -eu
 
 cd "$(dirname -- "$0")/.."
 
-repo=kriuchkov/herdr-scope
+# The releases this version's binaries come from.
+repo=killallgit/herdr-scope
 version=$(sed -n 's/^version = "\(.*\)"$/\1/p' herdr-plugin.toml | head -n 1)
 os=$(uname -s | tr '[:upper:]' '[:lower:]')
 arch=$(uname -m)
@@ -107,7 +108,7 @@ herdr-scope: cannot install: this checkout has no prebuilt binary for
 $os-$arch, no Go toolchain built one, and the v$version release binary could
 not be downloaded. Install a release, which ships prebuilt binaries for macOS,
 Linux and Windows on amd64 and arm64 (herdr plugin install
-kriuchkov/herdr-scope --ref release), or install Go 1.26 or newer
+$repo --ref release), or install Go 1.26 or newer
 (https://go.dev/dl/) and run the install again.
 EOF
 exit 1

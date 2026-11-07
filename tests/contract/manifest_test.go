@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/kriuchkov/herdr-scope/internal/bootstrap"
+	"github.com/killallgit/herdr-scope/internal/bootstrap"
 )
 
 type command struct {
@@ -46,7 +46,7 @@ func loadManifest(t *testing.T) manifest {
 
 func TestManifestIdentity(t *testing.T) {
 	m := loadManifest(t)
-	assert.Equal(t, "kriuchkov.herdr-scope", m.ID)
+	assert.Equal(t, "killallgit.herdr-scope", m.ID)
 	assert.Equal(t, bootstrap.Version, m.Version, "the manifest and the binary declare one version")
 	assert.Equal(t, "0.9.0", m.MinHerdrVersion, "protocol 22 shipped with Herdr 0.9.0")
 	assert.ElementsMatch(t, []string{"linux", "macos", "windows"}, m.Platforms)

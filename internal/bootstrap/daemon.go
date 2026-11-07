@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/kriuchkov/herdr-scope/internal/adapters/control"
-	"github.com/kriuchkov/herdr-scope/internal/application"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/adapters/control"
+	"github.com/killallgit/herdr-scope/internal/application"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 // Binding the endpoint can lose a race with a daemon that was just told to

@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const pluginID = "kriuchkov.herdr-scope"
+const pluginID = "killallgit.herdr-scope"
 
 type env struct {
 	t      *testing.T

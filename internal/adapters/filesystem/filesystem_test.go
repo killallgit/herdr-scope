@@ -12,14 +12,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/domain"
 )
 
 func envOf(m map[string]string) Env { return func(k string) string { return m[k] } }
 
 func TestResolvePathsFromHerdrEnv(t *testing.T) {
 	p := ResolvePaths(envOf(map[string]string{
-		"HERDR_PLUGIN_ID":         "kriuchkov.herdr-scope",
+		"HERDR_PLUGIN_ID":         "killallgit.herdr-scope",
 		"HERDR_PLUGIN_ROOT":       "/plugins/scope",
 		"HERDR_PLUGIN_CONFIG_DIR": "/cfg/scope",
 		"HERDR_PLUGIN_STATE_DIR":  "/state/scope",

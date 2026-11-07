@@ -17,9 +17,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/kriuchkov/herdr-scope/internal/adapters/scenario"
-	"github.com/kriuchkov/herdr-scope/internal/adapters/sidebar"
-	"github.com/kriuchkov/herdr-scope/internal/ports"
+	"github.com/killallgit/herdr-scope/internal/adapters/scenario"
+	"github.com/killallgit/herdr-scope/internal/adapters/sidebar"
+	"github.com/killallgit/herdr-scope/internal/ports"
 )
 
 //nolint:gochecknoglobals // a test flag is package state by design

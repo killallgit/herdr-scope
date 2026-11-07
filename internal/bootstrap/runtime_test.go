@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kriuchkov/herdr-scope/internal/adapters/sidebar"
-	"github.com/kriuchkov/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/adapters/sidebar"
+	"github.com/killallgit/herdr-scope/internal/domain"
 )
 
 // The writer's presentation probes the terminal font; a command that never

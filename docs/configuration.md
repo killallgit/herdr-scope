@@ -1,6 +1,6 @@
 # Configuration
 
-The file is `$(herdr plugin config-dir kriuchkov.herdr-scope)/config.toml`. The settings popup
+The file is `$(herdr plugin config-dir killallgit.herdr-scope)/config.toml`. The settings popup
 (`prefix+,`) edits it: `↑↓` select, `←→` change, `↵` edit, `r` default, `s` save, `q` close. A
 save validates every value, rewrites only the lines that changed (your comments stay), and the
 daemon applies it at once. Hand edits are picked up within two seconds.

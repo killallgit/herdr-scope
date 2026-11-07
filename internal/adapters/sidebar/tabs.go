@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/domain"
 )
 
 // renamed is a rename Scope sent: the label it replaced and the label it

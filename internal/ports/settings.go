@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/domain"
 )
 
 // Settings is the plugin configuration as the application sees it.

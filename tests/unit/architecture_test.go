@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const module = "github.com/kriuchkov/herdr-scope"
+const module = "github.com/killallgit/herdr-scope"
 
 // layerRules: for each inner layer, the module packages it may import and the
 // standard-library packages it must not.

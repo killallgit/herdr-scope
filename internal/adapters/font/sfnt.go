@@ -6,7 +6,7 @@ import (
 	"math/bits"
 	"sort"
 
-	"github.com/kriuchkov/herdr-scope/internal/domain"
+	"github.com/killallgit/herdr-scope/internal/domain"
 )
 
 // sfnt is a TrueType font held as its tables: enough to graft glyphs from
