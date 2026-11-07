@@ -154,6 +154,20 @@ From a checkout: `make build && herdr plugin link .` (`plugin link` runs no buil
 [Architecture](docs/architecture.md), [Herdr protocol notes](docs/protocol.md),
 [design decisions](docs/design.md). `docs/demo/record.sh` re-records the GIF.
 
+### Release verification
+
+Run a non-publishing release rehearsal on the branch to test and package all six
+platform binaries:
+
+```sh
+gh workflow run release.yml --ref <branch>
+```
+
+Manual runs upload the release artifacts but skip publishing. To publish after
+merging, keep `herdr-plugin.toml` and `internal/bootstrap/version.go` at the same
+new version, then push its `vX.Y.Z` tag. The release workflow publishes the
+archives, checksums, `vX.Y.Z-bin` tag, and (for stable versions) `release` branch.
+
 ## License
 
 MIT, see [LICENSE](LICENSE). The icon font is forked from qintmb/herdr-icon-agent-ui (MIT),
