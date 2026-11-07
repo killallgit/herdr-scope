@@ -41,7 +41,7 @@ where go >nul 2>nul
 if not errorlevel 1 (
   echo herdr-scope: no prebuilt binary for windows-%ARCH%, building from source with Go
   go build -trimpath -o bin\herdr-scope.exe .\cmd\herdr-scope && exit /b 0
-  1>&2 echo herdr-scope: go build failed, it needs Go 1.26 or newer; trying the release binary
+  1>&2 echo herdr-scope: go build failed, it needs the Go toolchain declared in go.mod; trying the release binary
 )
 
 rem The release download. The script reads the version from the manifest
@@ -52,7 +52,7 @@ powershell -NoProfile -NonInteractive -Command "$ErrorActionPreference = 'Stop';
 
 1>&2 echo herdr-scope: cannot install: this checkout has no prebuilt binary for
 1>&2 echo windows-%ARCH%, no Go toolchain built one, and the release binary could
-1>&2 echo not be downloaded. Install a release, which ships prebuilt binaries for
-1>&2 echo macOS, Linux and Windows on amd64 and arm64: herdr plugin install killallgit/herdr-scope --ref release
-1>&2 echo -- or install Go 1.26 or newer from https://go.dev/dl/ and run the install again.
+1>&2 echo not be downloaded. New prebuilt releases are available only for
+1>&2 echo macOS and Linux. Building from source on Windows requires Go.
+1>&2 echo -- or install the Go version declared in go.mod from https://go.dev/dl/ and run the install again.
 exit /b 1

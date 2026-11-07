@@ -46,13 +46,16 @@ type Scenario struct {
 	Panes []json.RawMessage `json:"panes,omitempty"`
 	// Activity seeds when panes last worked, as offsets from Start ("-30m").
 	Activity map[string]string `json:"activity"`
-	Steps    []Step            `json:"steps"`
+	// Folded names family roots, not individual workspaces to hide.
+	Folded []domain.WorkspaceID `json:"folded,omitempty"`
+	Steps  []Step               `json:"steps"`
 }
 
 // Step is one frame: the agent list at a moment.
 type Step struct {
-	At     string                       `json:"at"`
-	Agents []map[string]json.RawMessage `json:"agents"`
+	At      string                       `json:"at"`
+	Focused domain.WorkspaceID           `json:"focused_workspace_id,omitempty"`
+	Agents  []map[string]json.RawMessage `json:"agents"`
 }
 
 // Load reads a scenario file.
@@ -136,6 +139,9 @@ type replay struct {
 	host        *storeHost
 	writer      *sidebar.Writer
 	memory      *domain.Memory
+	folded      map[domain.WorkspaceID]bool
+	opened      map[domain.WorkspaceID]bool
+	focused     domain.WorkspaceID
 	now         time.Time
 	live        []domain.PaneID
 	result      Result
@@ -159,7 +165,10 @@ func Run(s Scenario) (Result, error) {
 	r := &replay{
 		s: s, settings: settings, mode: mode, hostGrouped: s.HostGrouped == nil || *s.HostGrouped,
 		mapper: herdr.Mapper{Home: Home, Showing: sidebar.ReadBack},
-		memory: domain.NewMemory(nil), now: s.Start,
+		memory: domain.NewMemory(nil), now: s.Start, folded: map[domain.WorkspaceID]bool{},
+	}
+	for _, root := range s.Folded {
+		r.folded[root] = true
 	}
 	r.host = &storeHost{panes: sidebar.Store{}, workspaces: sidebar.Store{}, paneIDs: func() []domain.PaneID { return r.live }}
 	r.writer = sidebar.NewWriter(r.host, presentation, func() time.Time { return r.now })
@@ -196,6 +205,11 @@ func (r *replay) step(index int, step Step) error {
 	for _, a := range session.Agents {
 		r.live = append(r.live, a.Pane)
 	}
+	if session.FocusedWorkspace != "" {
+		r.focused = session.FocusedWorkspace
+	}
+	tree := domain.ResolveTree(session.Workspaces, r.settings.Policy.NestFolders, session.Home)
+	r.opened = domain.FollowVisits(r.opened, r.result.View, session.Agents, r.focused, tree)
 	r.memory.Track(session.Agents)
 	if index == 0 {
 		if err = seed(r.memory, r.s, session.Agents); err != nil {
@@ -212,6 +226,7 @@ func (r *replay) step(index int, step Step) error {
 	r.result.View = domain.BuildSidebar(domain.SidebarInput{
 		At: r.now, Mode: r.mode, HostGrouped: r.hostGrouped, Policy: r.settings.Policy,
 		Workspaces: session.Workspaces, Tabs: session.Tabs, Home: session.Home, Agents: observed,
+		Folded: r.folded, Focused: r.focused, Opened: r.opened, Tree: &tree,
 	})
 	_, err = r.writer.Apply(context.Background(), r.result.View)
 	return err //nolint:wrapcheck // the caller names the step
@@ -237,6 +252,7 @@ func decodeStep(mapper herdr.Mapper, s Scenario, step Step, store sidebar.Store)
 	raw, err := json.Marshal(map[string]any{"snapshot": map[string]any{
 		"version": "scenario", "protocol": 22,
 		"workspaces": s.Workspaces, "tabs": s.Tabs, "panes": s.Panes, "agents": agents,
+		"focused_workspace_id": step.Focused,
 	}})
 	if err != nil {
 		return domain.Session{}, fmt.Errorf("snapshot: %w", err)

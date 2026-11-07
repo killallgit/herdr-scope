@@ -356,7 +356,7 @@ func (p *parser) presentation(pres *ports.PresentationSettings) {
 		}
 	}
 	glyphs := table(p.raw, "glyphs")
-	pres.Glyphs = map[domain.DisplayState]string{}
+	pres.Glyphs = make(map[domain.DisplayState]string)
 	for name, v := range glyphs {
 		state, known := domain.ParseDisplayState(name)
 		glyph, isString := v.(string)

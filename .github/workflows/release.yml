@@ -4,7 +4,7 @@ name: Release
 #   - a GitHub release with per-platform archives (binary, LICENSE,
 #     THIRD_PARTY_NOTICES.md) and SHA256SUMS;
 #   - the installable tree: one orphan commit holding the tagged source plus
-#     the prebuilt binaries at bin/herdr-scope-<os>-<arch>[.exe], force-pushed
+#     the prebuilt binaries at bin/herdr-scope-<os>-<arch>, force-pushed
 #     to the `release` branch and tagged vX.Y.Z-bin, so that
 #     `herdr plugin install <repo> --ref release` (or --ref vX.Y.Z-bin) needs
 #     no Go toolchain. A pre-release tag (vX.Y.Z-rc.1) gets its -bin tag but
@@ -22,10 +22,19 @@ on:
 permissions:
   contents: read
 
+env:
+  GOTOOLCHAIN: local
+
 jobs:
+  quality:
+    name: Quality gates
+    uses: ./.github/workflows/ci.yml
+
   build:
     name: Build
+    needs: quality
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       version: ${{ steps.version.outputs.version }}
       prerelease: ${{ steps.version.outputs.prerelease }}
@@ -33,6 +42,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -70,15 +80,20 @@ jobs:
           echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
           echo "Releasing $version (pre-release: $prerelease)"
 
-      - name: Test
-        run: go test -count=1 ./...
+      - name: Require stable release tags to come from master
+        if: github.event_name == 'push' && steps.version.outputs.prerelease == 'false'
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/master; then
+            echo "::error::Stable release tags must point to a commit on master"
+            exit 1
+          fi
 
       - name: Build the binaries
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           make dist VERSION="$VERSION"
-          test "$(find build/bin -type f | wc -l)" -eq 6
+          test "$(find build/bin -type f | wc -l)" -eq 3
           build/bin/herdr-scope-linux-amd64 version | grep -F "herdr-scope $VERSION "
 
       - name: Package the archives
@@ -88,23 +103,15 @@ jobs:
           rm -rf build/pkg build/release
           mkdir -p build/pkg build/release
           for bin in build/bin/herdr-scope-*; do
-            platform=$(basename "$bin" .exe)
+            platform=$(basename "$bin")
             platform=${platform#herdr-scope-}
             dir=herdr-scope-$VERSION-$platform
             mkdir "build/pkg/$dir"
             cp LICENSE THIRD_PARTY_NOTICES.md "build/pkg/$dir/"
-            case "$platform" in
-              windows-*)
-                cp "$bin" "build/pkg/$dir/herdr-scope.exe"
-                (cd build/pkg && zip -qrX "../release/$dir.zip" "$dir")
-                ;;
-              *)
-                install -m 755 "$bin" "build/pkg/$dir/herdr-scope"
-                tar -C build/pkg -czf "build/release/$dir.tar.gz" "$dir"
-                ;;
-            esac
+            install -m 755 "$bin" "build/pkg/$dir/herdr-scope"
+            tar -C build/pkg -czf "build/release/$dir.tar.gz" "$dir"
           done
-          (cd build/release && sha256sum -- *.tar.gz *.zip > SHA256SUMS && cat SHA256SUMS)
+          (cd build/release && sha256sum -- *.tar.gz > SHA256SUMS && cat SHA256SUMS)
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -117,6 +124,7 @@ jobs:
 
   publish:
     name: Publish
+    timeout-minutes: 10
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
@@ -180,7 +188,7 @@ jobs:
 
               herdr plugin install $GITHUB_REPOSITORY --ref $TAG-bin
 
-          Use --ref release instead to install the latest release. Without --ref, Herdr checks out the default branch: the install step builds it from source when Go 1.26 or newer is on PATH, and otherwise downloads this release's binary and checks it against SHA256SUMS.
+          Use --ref release instead to install the latest release. Without --ref, Herdr checks out the default branch: the install step builds it from source using the Go toolchain declared in go.mod, and otherwise downloads this release's binary and checks it against SHA256SUMS.
 
           The archives hold the same binaries with LICENSE and THIRD_PARTY_NOTICES.md; SHA256SUMS lists their checksums.
           EOF

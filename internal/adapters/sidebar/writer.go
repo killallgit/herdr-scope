@@ -61,9 +61,7 @@ type Writer struct {
 	failed map[string]failure
 	// members fingerprints the row set; a change triggers an orphan sweep.
 	members string
-	// alone are the titles of rows that show a fold line alone, which a
-	// plain clear puts back so a stopped daemon leaves them readable.
-	alone map[domain.PaneID]Tokens
+	restore map[domain.PaneID]Tokens
 	// tabs are the renames sent that the session read may not show yet.
 	tabs map[domain.TabID]renamed
 }
@@ -85,7 +83,7 @@ func (w *Writer) reset() {
 	w.agents = map[domain.PaneID]domain.AgentID{}
 	w.failed = map[string]failure{}
 	w.members = ""
-	w.alone = map[domain.PaneID]Tokens{}
+	w.restore = map[domain.PaneID]Tokens{}
 	w.tabs = map[domain.TabID]renamed{}
 }
 
@@ -124,28 +122,22 @@ func (w *Writer) Apply(ctx context.Context, view domain.SidebarView) (time.Time,
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	now := w.clock()
+	projected := w.presentation.Project(view)
 	var jobs []job
 	live := map[domain.PaneID]domain.AgentID{}
-	alone := map[domain.PaneID]Tokens{}
-	for _, group := range view.Groups {
-		for i, row := range group.Rows {
-			live[row.Pane] = row.Agent
-			jobs = append(jobs, job{key: paneKey(row.Pane), pane: row.Pane, tokens: w.presentation.PaneTokens(view, group, i)})
-			if row.Fold != nil && row.Fold.Alone {
-				alone[row.Pane] = titles(w.presentation.FoldedTokens(view, row))
-			}
+	w.restore = map[domain.PaneID]Tokens{}
+	for id, pane := range projected.Panes {
+		live[id] = pane.Agent
+		jobs = append(jobs, job{key: paneKey(id), pane: id, tokens: pane.Tokens})
+		if len(pane.Restore) > 0 {
+			w.restore[id] = pane.Restore
 		}
 	}
-	for _, row := range view.Folded {
-		live[row.Pane] = row.Agent
-		jobs = append(jobs, job{key: paneKey(row.Pane), pane: row.Pane, tokens: w.presentation.FoldedTokens(view, row)})
-	}
-	w.alone = alone
 	jobs = append(jobs, w.gonePanes(live)...)
 	liveSpaces := map[domain.WorkspaceID]bool{}
-	for _, space := range view.Spaces {
-		liveSpaces[space.Workspace] = true
-		jobs = append(jobs, job{key: spaceKey(space.Workspace), space: space.Workspace, tokens: w.presentation.SpaceTokens(space, view.At)})
+	for id, tokens := range projected.Spaces {
+		liveSpaces[id] = true
+		jobs = append(jobs, job{key: spaceKey(id), space: id, tokens: tokens})
 	}
 	jobs = append(jobs, w.goneSpaces(liveSpaces)...)
 
@@ -158,7 +150,7 @@ func (w *Writer) Apply(ctx context.Context, view domain.SidebarView) (time.Time,
 			w.members = fingerprint
 		}
 	}
-	next := w.presentation.NextRepaint(view)
+	next := projected.Next
 	if retry := w.nextRetry(now, jobs, view.Tabs); !retry.IsZero() && (next.IsZero() || retry.Before(next)) {
 		next = retry
 	}
@@ -376,7 +368,7 @@ func (w *Writer) Clear(ctx context.Context, purge bool) error {
 	}
 	errs := []error{w.sweep(ctx, nil, names)}
 	if !purge {
-		for pane, tokens := range w.alone {
+		for pane, tokens := range w.restore {
 			errs = append(errs, w.report(ctx, job{pane: pane}, tokens))
 		}
 	}
@@ -409,17 +401,6 @@ func delta(tokens Tokens, sent map[string]string) Tokens {
 		case value == nil && wasSet:
 			out[name] = nil
 		case value != nil && (!wasSet || previous != *value):
-			out[name] = value
-		}
-	}
-	return out
-}
-
-// titles are the title tokens a patch sets.
-func titles(tokens Tokens) Tokens {
-	out := Tokens{}
-	for name, value := range tokens {
-		if value != nil && strings.HasPrefix(name, titlePrefix) {
 			out[name] = value
 		}
 	}

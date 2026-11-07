@@ -58,8 +58,8 @@ for this fork's development. The original MIT copyright and license remain in
 herdr plugin install killallgit/herdr-scope --ref release
 ```
 
-The `release` branch carries prebuilt binaries for macOS, Linux and Windows once
-published for this fork. Without `--ref`, Herdr builds from source with Go 1.26+. Without Go, it downloads the release binary and checks its checksum. Setup
+The `release` branch carries prebuilt binaries for macOS (amd64/arm64) and Linux (amd64) once
+published for this fork. Without `--ref`, Herdr builds from source using the Go version declared in [`go.mod`](go.mod). Without Go, it downloads the release binary and checks its checksum. Setup
 adds Scope's blocks to Herdr's `config.toml` between `HERDR-SCOPE` markers and installs the
 icon font for your user. It requires Herdr 0.9+ (protocol 22).
 
@@ -145,19 +145,21 @@ statuses, never prompts or titles. Like any Herdr plugin, Scope runs as you, uns
 
 ```sh
 make build     # bin/herdr-scope; the next state-start restarts the daemon on it
-make race      # unit, contract and golden tests
-make lint      # golangci-lint for darwin and windows
+make check     # pinned formatting, modules, workflows, lint, security and race/coverage gates
+make race      # offline unit, architecture, contract and golden tests
+make lint      # pinned golangci-lint for the host platform
 make golden    # rewrite tests/golden after an intended change to the look
 ```
 
 From a checkout: `make build && herdr plugin link .` (`plugin link` runs no build step).
 [Architecture](docs/architecture.md), [Herdr protocol notes](docs/protocol.md),
-[design decisions](docs/design.md). `docs/demo/record.sh` re-records the GIF.
+[design decisions](docs/design.md), [CI and test tooling](docs/ci.md).
+`docs/demo/record.sh` re-records the GIF.
 
 ### Release verification
 
-Run a non-publishing release rehearsal on the branch to test and package all six
-platform binaries:
+Run a non-publishing release rehearsal on the branch to run the full CI suite
+and package all three platform binaries:
 
 ```sh
 gh workflow run release.yml --ref <branch>

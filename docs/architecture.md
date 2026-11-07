@@ -1,5 +1,7 @@
 # Architecture
 
+Domain terms are defined in [GLOSSARY.md](../GLOSSARY.md).
+
 Scope observes Herdr and paints the sidebar. It writes only its own display tokens, the
 Agents panel's view, a waiting tab's mark, the workspace order (`reorder_workspaces`,
 `nest_folders`), its managed blocks in Herdr's `config.toml`, and files in its own
@@ -74,6 +76,16 @@ socket disappears.
 | `font` | the icon font in the user font dir, Ghostty/kitty codepoint maps, `font patch` |
 | `tui` | the settings popup |
 | `scenario` | replays recorded Herdr payloads through the pipeline for the golden tests and `render` |
+
+`Presentation.Project` is a pure transformation from a sidebar view to pane and Spaces
+tokens, restoration titles, and the next visible repaint. The writer adapter owns delivery,
+diffs, retries, and cleanup; it does not interpret folds. Hidden carrier titles contribute
+no repaint deadline, while the fold line's spinner and visible Spaces pulses still do.
+
+Scenario replay supplies folded roots and each step's focused workspace, reusing
+`FollowVisits` and `BuildSidebar` to exercise fold visits through the same domain rules.
+Its short observation sequence remains separate from the observer's I/O recovery and
+cached-frame scheduling.
 
 `internal/bootstrap` builds every adapter once per process and injects functions where one
 adapter needs another's behaviour.

@@ -1,0 +1,15 @@
+# a visit shows the folded family whole until focus leaves
+Agents
+ ▾ acme{fold}
+   §{logo_fresh} · 2m Draft release notes{title_idle_fresh}
+   └─ billing{group}
+     Λ{logo_working} · ⣽ Ledger rows{title_working}
+   {gap}
+ ▸ notes{fold}
+   §{logo_fresh} · 5m Plan next week{title_idle_fresh}
+   {gap}
+
+Spaces
+ §{space_idle} · acme{space_label}
+   └─ Λ{space_working_other} · billing{space_label}
+ §{space_idle} · notes{space_label}

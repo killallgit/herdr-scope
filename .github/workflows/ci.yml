@@ -5,69 +5,150 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  merge_group:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 6 * * 1'
 
 permissions:
   contents: read
 
+env:
+  GOTOOLCHAIN: local
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test:
-    name: Test (race)
+    name: Test (Linux, ${{ matrix.go || 'module Go' }})
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: go.mod
-      - name: Run tests
-        run: go test -race -count=1 ./...
-
-  lint:
-    # Like `make lint`: the code has unix and windows variants, so lint each
-    # platform the plugin ships for.
-    name: Lint (${{ matrix.goos }})
-    runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        goos: [ linux, darwin, windows ]
+        go: [ '', stable ]
+    env:
+      CGO_ENABLED: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ matrix.go }}
+          go-version-file: go.mod
+          cache-dependency-path: |
+            go.sum
+            tools/go.sum
+      - name: Race tests and coverage
+        run: make coverage
+      - name: Coverage summary
+        run: tail -n 1 build/reports/coverage.txt >> "$GITHUB_STEP_SUMMARY"
+      - name: Save test reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: tests-linux-${{ matrix.go || 'module' }}
+          path: build/reports
+          retention-days: 7
+
+  analysis:
+    name: Analysis (${{ matrix.goos }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        goos: [ linux, darwin ]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
-      - name: Run golangci-lint
+          cache-dependency-path: |
+            go.sum
+            tools/go.sum
+      - name: Lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         env:
           GOOS: ${{ matrix.goos }}
         with:
-          # Keep in step with the golangci-lint `make lint` runs locally.
-          version: v2.12.2
-          args: --config .golangci.yaml
+          version-file: .golangci-lint-version
+          args: --config .golangci.yaml ./...
+      - name: Vulnerability analysis
+        env:
+          TARGET_GOOS: ${{ matrix.goos }}
+        run: make vuln
 
-  dist:
-    # A broken cross-compile shows up here, not when a release tag is pushed.
-    name: Cross-compile
+  verify:
+    name: Format, modules, workflows
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: |
+            go.sum
+            tools/go.sum
+      - run: make fmt-check modules workflows
+
+  integration:
+    name: Live integration (Herdr 0.9.5)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: |
+            go.sum
+            tools/go.sum
+      - name: Install the tested Herdr release
+        run: |
+          curl -fL --retry 3 https://github.com/herdrdev/herdr/releases/download/v0.9.5/herdr-linux-x86_64 -o "$RUNNER_TEMP/herdr"
+          echo "14d9e8bc8b4a9e0118d77c32266f76d461f09b40342eb23752960bd89f59929d  $RUNNER_TEMP/herdr" | sha256sum --check
+          chmod 755 "$RUNNER_TEMP/herdr"
+      - name: Run isolated integration tests
+        env:
+          HERDR_SCOPE_HERDR: ${{ runner.temp }}/herdr
+        run: make integration
+      - name: Save integration reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: integration
+          path: build/reports
+          retention-days: 7
+
+  dist:
+    name: Cross-compile and install
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
       - name: Build the release binaries
         run: make dist
-      # Every path of the install build step: a release tree's prebuilt binary,
-      # a source tree with no binaries, and one whose Go fails (the runner has
-      # a system Go to hide), which downloads the release of its version once
-      # that release exists.
       - name: Check the install step
         run: |
           shellcheck scripts/build.sh
@@ -85,24 +166,49 @@ jobs:
           mkdir -p "$RUNNER_TEMP/broken-go"
           printf '#!/bin/sh\nexit 1\n' > "$RUNNER_TEMP/broken-go/go"
           chmod 755 "$RUNNER_TEMP/broken-go/go"
-          if curl -fsIL -o /dev/null "https://github.com/$GITHUB_REPOSITORY/releases/download/v$version/SHA256SUMS"; then
-            env PATH="$RUNNER_TEMP/broken-go:$PATH" sh scripts/build.sh | tee build/install.log
-            grep -q "installed the v$version release binary" build/install.log
-            bin/herdr-scope version
-          else
-            echo "v$version is not released yet: the download path is checked once it is"
-          fi
-      # A Go-less install pairs this checkout's manifest with the binary of the
-      # release of its version, so a released version's manifest stays as
-      # released: change it, bump the version. Comments may change.
+          status=$(curl -sSIL --retry 3 --max-time 30 --retry-max-time 120 -o /dev/null -w '%{http_code}' \
+            "https://github.com/$GITHUB_REPOSITORY/releases/download/v$version/SHA256SUMS")
+          case "$status" in
+            200)
+              env PATH="$RUNNER_TEMP/broken-go:$PATH" sh scripts/build.sh | tee build/install.log
+              grep -q "installed the v$version release binary" build/install.log
+              bin/herdr-scope version
+              ;;
+            404) echo "v$version is not released yet: the download path is checked once it is" ;;
+            *) echo "::error::Release lookup returned HTTP $status"; exit 1 ;;
+          esac
       - name: Check the manifest against its release
         run: |
           version=$(sed -n 's/^version = "\(.*\)"$/\1/p' herdr-plugin.toml | head -n 1)
-          if git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null; then
-            git fetch --quiet --depth=1 origin "refs/tags/v$version:refs/tags/v$version"
-            strip() { grep -v -E '^[[:space:]]*(#|$)'; }
-            if ! diff <(git show "v$version:herdr-plugin.toml" | strip) <(strip < herdr-plugin.toml); then
-              echo "::error file=herdr-plugin.toml::the manifest changed since v$version, whose binary a Go-less install downloads: bump the version"
+          status=0
+          git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null || status=$?
+          case "$status" in
+            0)
+              git fetch --quiet --depth=1 origin "refs/tags/v$version:refs/tags/v$version"
+              strip() { grep -v -E '^[[:space:]]*(#|$)'; }
+              if ! diff <(git show "v$version:herdr-plugin.toml" | strip) <(strip < herdr-plugin.toml); then
+                echo "::error file=herdr-plugin.toml::the manifest changed since v$version, whose binary a Go-less install downloads: bump the version"
+                exit 1
+              fi
+              ;;
+            2) echo "v$version has no release tag yet" ;;
+            *) echo "::error::Release tag lookup failed with status $status"; exit "$status" ;;
+          esac
+
+  check:
+    name: CI passed
+    if: always()
+    needs: [ test, analysis, verify, integration, dist ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Require every gate to pass
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for result in $RESULTS; do
+            if [ "$result" != success ]; then
+              echo "::error::A required job ended with $result"
               exit 1
             fi
-          fi
+          done

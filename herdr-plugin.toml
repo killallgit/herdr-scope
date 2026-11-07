@@ -12,11 +12,11 @@ platforms = ["linux", "macos", "windows"]
 #   - Release install, no Go needed: `herdr plugin install
 #     killallgit/herdr-scope --ref release` (or `--ref vX.Y.Z-bin` to pin a
 #     version) checks out the tree the release workflow publishes: the tagged
-#     source plus prebuilt bin/herdr-scope-<os>-<arch>[.exe] for macOS, Linux
-#     and Windows on amd64 and arm64. The step copies this machine's binary.
+#     source plus prebuilt bin/herdr-scope-<os>-<arch> for macOS (amd64/arm64)
+#     and Linux (amd64). The step copies this machine's binary.
 #   - Source install (the default branch, as the plugin catalog installs it,
-#     or any source tag) with Go 1.26+ on PATH: the step runs `go build`,
-#     which fetches the modules.
+#     or any source tag) with a compatible Go toolchain on PATH: the step
+#     runs `go build` with the toolchain and modules declared in go.mod.
 #   - Source install without Go, or when that build fails: the step downloads
 #     the archive of this manifest's version from the GitHub release and
 #     checks it against the release's SHA256SUMS.

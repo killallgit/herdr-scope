@@ -121,7 +121,7 @@ func TestRecordedEventsNormalise(t *testing.T) {
 	f, err := os.Open(filepath.Join(filepath.Dir(callerFile(t)), "..", "fixtures", "herdr", "events.jsonl"))
 	require.NoError(t, err)
 	defer f.Close()
-	seen := map[domain.EventKind]domain.AgentEvent{}
+	seen := make(map[domain.EventKind]domain.AgentEvent)
 	scanner := bufio.NewScanner(f)
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 	for scanner.Scan() {

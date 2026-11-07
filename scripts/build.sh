@@ -96,7 +96,7 @@ if command -v go >/dev/null 2>&1; then
 	if go build -trimpath -o bin/herdr-scope ./cmd/herdr-scope; then
 		exit 0
 	fi
-	echo "herdr-scope: go build failed (it needs Go 1.26 or newer); trying the release binary" >&2
+	echo "herdr-scope: go build failed (it needs the Go toolchain declared in go.mod); trying the release binary" >&2
 fi
 
 if download; then
@@ -106,9 +106,9 @@ fi
 cat >&2 <<EOF
 herdr-scope: cannot install: this checkout has no prebuilt binary for
 $os-$arch, no Go toolchain built one, and the v$version release binary could
-not be downloaded. Install a release, which ships prebuilt binaries for macOS,
-Linux and Windows on amd64 and arm64 (herdr plugin install
-$repo --ref release), or install Go 1.26 or newer
+not be downloaded. Install a release, which ships prebuilt binaries for macOS
+(amd64/arm64) and Linux (amd64) (herdr plugin install
+$repo --ref release), or install the Go version declared in go.mod
 (https://go.dev/dl/) and run the install again.
 EOF
 exit 1

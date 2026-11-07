@@ -361,6 +361,37 @@ func TestWriterHidesFoldedRowsAndAStopShowsThemAgain(t *testing.T) {
 	assert.Equal(t, "task", host.store["w1:p1"]["title_idle"], "the lone line's row reads again")
 }
 
+func TestWriterRestoresFoldTitlesInBothLayouts(t *testing.T) {
+	for _, layout := range []ports.Layout{ports.LayoutClassic, ports.LayoutCompact} {
+		t.Run(string(layout), func(t *testing.T) {
+			host := newFakeHost()
+			settings := ports.DefaultSettings()
+			settings.Presentation.Layout = layout
+			settings.Presentation.Variant = ports.VariantText
+			settings.Presentation.ShowAge = ports.AgeAll
+			w := NewWriter(host, NewPresentation(settings, nil), (&clock{now: at0()}).Now)
+			carrier := idleRow("a1", "w1:p1")
+			carrier.Since = at0().Add(-90 * time.Second)
+			carrier.Fold = &domain.Fold{Root: "w1", Label: "dashboard", Hidden: 2, Alone: true}
+			v := view(carrier)
+			v.Folded = []domain.SidebarRow{idleRow("a2", "w1:p2")}
+
+			next, err := w.Apply(context.Background(), v)
+
+			require.NoError(t, err)
+			assert.True(t, next.IsZero())
+			assert.NotContains(t, host.store["w1:p1"], "title_idle")
+			require.NoError(t, w.Clear(context.Background(), false))
+			want := "1m task"
+			if layout == ports.LayoutCompact {
+				want = "§ " + want
+			}
+			assert.Equal(t, want, host.store["w1:p1"]["title_idle"])
+			assert.NotContains(t, host.store["w1:p2"], "folded")
+		})
+	}
+}
+
 // busyView is a full panel: fifteen workspaces of two agents each, every
 // state and a spread of vendors, grouped, with the Spaces column.
 func busyView() domain.SidebarView {

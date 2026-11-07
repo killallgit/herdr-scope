@@ -638,7 +638,7 @@ func (p Presentation) NextRepaint(view domain.SidebarView) time.Time {
 	next := NextAnimation(view)
 	for _, g := range view.Groups {
 		for _, row := range g.Rows {
-			if row.Since.IsZero() || !p.showsAge(row.Display) {
+			if (row.Fold != nil && row.Fold.Alone) || row.Since.IsZero() || !p.showsAge(row.Display) {
 				continue
 			}
 			if at := ageChange(view.At, row.Since); next.IsZero() || at.Before(next) {

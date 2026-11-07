@@ -1,0 +1,10 @@
+# folds: visiting a carrier opens its family until focus leaves; a lone agent stays visible
+Agents
+ ▸ acme Λ ⢿ +2{fold}
+ ▸ notes{fold}
+   § 5m Plan next week{title_idle_fresh}
+
+Spaces
+ § acme{space_idle}
+   └─ Λ billing{space_working_other}
+ § notes{space_idle}
